@@ -24,8 +24,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
 }
 #banner.visible{opacity:1}
 .ban-arabic{font-size:12px;letter-spacing:.18em;color:#E8C96A;text-transform:uppercase;margin-bottom:4px}
-.ban-title{font-family:'Playfair Display',serif;font-size:clamp(18px,3.5vw,30px);font-weight:700;color:#F5E6B8;line-height:1.2}
-.ban-sub{font-style:italic;font-size:13px;color:#A89060;margin-top:2px}
+.ban-title{font-family:'Playfair Display',serif;font-size:clamp(24px,4.5vw,42px);font-weight:700;color:#F5E6B8;line-height:1.2}
+.ban-sub{font-style:italic;font-size:16px;color:#A89060;margin-top:2px}
 
 /* Name bar */
 #name-bar{
@@ -54,13 +54,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
 
 /* Hint tooltip */
 #hint{
-  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
-  font-style:italic;font-size:12px;color:rgba(201,168,76,.5);
+  position:absolute;bottom:48px;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-style:italic;font-size:15px;color:#F5E6B8;
   letter-spacing:.08em;pointer-events:none;
-  opacity:0;transition:opacity .5s;
+  opacity:0;transition:opacity .4s;
   white-space:nowrap;
+  background:linear-gradient(135deg,rgba(26,74,48,.92),rgba(13,43,31,.92));
+  border:1px solid rgba(201,168,76,.5);
+  border-radius:24px;
+  padding:10px 22px;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+  display:flex;align-items:center;gap:10px;
 }
 #hint.visible{opacity:1}
+#hint::before{
+  content:'';
+  display:inline-block;
+  width:6px;height:6px;
+  background:#C9A84C;
+  border-radius:50%;
+  flex-shrink:0;
+}
 
 /* Click label */
 #click-label{
@@ -129,8 +144,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
 }
 #door-modal .ar{font-size:26px;color:#E8C96A;margin-bottom:10px;letter-spacing:.1em}
 #door-modal .dt{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#F5E6B8;margin-bottom:8px}
-#door-modal .ds{font-style:italic;font-size:15px;color:#A89060}
-#door-modal .stars{margin-top:18px;font-size:18px;color:rgba(201,168,76,.6);letter-spacing:.15em}
+#door-modal .ds{font-style:italic;font-size:20px;color:#A89060}
+#door-modal .stars{margin-top:18px;font-size:20px;color:rgba(201,168,76,.6);letter-spacing:.15em}
 
 /* Loading */
 #loading{
@@ -142,6 +157,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
 #loading .dots span:nth-child(2){animation-delay:.2s}
 #loading .dots span:nth-child(3){animation-delay:.4s}
 @keyframes dot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+.cam-btn{
+  background:rgba(201,168,76,0.12);
+  border:1px solid rgba(201,168,76,0.4);
+  color:#E8C96A;
+  width:32px;height:32px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s, transform .1s;
+  font-family:'Cormorant Garamond',serif;
+  padding:0;
+}
+.cam-btn:hover{ background:rgba(201,168,76,0.28); }
+.cam-btn:active{ transform:scale(0.92); background:rgba(201,168,76,0.4); }
 </style>
 </head>
 <body>
@@ -153,19 +184,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
 
 <canvas id="c"></canvas>
 
+<audio id="bg-music" style="display:none"></audio>
+
 <!-- HUD -->
 <div id="hud">
   <div id="banner">
     <p class="ban-arabic">عيد مبارك</p>
-    <h1 class="ban-title" id="ban-title">Selamat Hari Raya Idul Fitri 1446 H</h1>
+    <h1 class="ban-title" id="ban-title">Selamat Hari Raya Idul Fitri 1447 H</h1>
     <p class="ban-sub">Minal Aidin Wal Faizin — Mohon Maaf Lahir dan Batin</p>
   </div>
   <div id="click-label"></div>
+  <div id="speech-bubble" style="position:absolute;background:#F5E6B8;color:#0a1f14;
+    padding:8px 16px;border-radius:12px;font-weight:bold;font-size:14px;
+    pointer-events:none;opacity:0;transition:opacity 0.3s;
+    transform:translate(-50%,-100%);z-index:20;white-space:nowrap;">
+  </div>
+  <style>
+  #speech-bubble::after{content:'';position:absolute;bottom:-6px;left:50%;
+    transform:translateX(-50%);border-width:6px 6px 0;border-style:solid;
+    border-color:#F5E6B8 transparent transparent transparent;}
+  </style>
+  <div id="crosshair" style="position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .3s">
+    <div style="width:16px;height:1px;background:rgba(201,168,76,0.7);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    <div style="width:1px;height:16px;background:rgba(201,168,76,0.7);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    <div style="width:4px;height:4px;border:1px solid rgba(201,168,76,0.7);border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+  </div>
   <div id="hint">Klik objek dalam ruangan untuk berinteraksi</div>
-  <div id="name-bar">
-    <input type="text" id="nameInput" placeholder="Nama Anda…" maxlength="28"
-      onkeydown="if(event.key==='Enter')applyName()"/>
-    <button id="nameBtn" onclick="applyName()">✦ Personalisasi</button>
+  <div id="lock-hint" style="position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;pointer-events:none;
+    background:rgba(10,31,20,0.45);transition:opacity .4s">
+    <div style="font-family:'Playfair Display',serif;font-size:18px;color:#F5E6B8;
+      margin-bottom:8px;letter-spacing:.08em">Klik untuk melihat sekeliling</div>
+    <div style="font-size:12px;color:#A89060;font-style:italic;letter-spacing:.06em">
+      WASD / ↑↓←→ bergerak &nbsp;·&nbsp; Mouse lihat &nbsp;·&nbsp; Esc keluar
+    </div>
   </div>
 </div>
 
@@ -176,10 +229,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
       <video id="vid-player" style="width:100%;height:100%;background:#000;display:block"
         controls playsinline>
         <source id="vid-src" src="" type="video/mp4"/>
-        Browser tidak mendukung video.
       </video>
     </div>
-    <p style="font-style:italic;font-size:13px;color:#A89060;letter-spacing:.06em">Klik ✕ atau tekan Esc untuk menutup</p>
+    <div style="display:flex;gap:12px;align-items:center">
+      <button onclick="prevVideo()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:#E8C96A;border-radius:20px;padding:6px 16px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:14px">← Video Sebelumnya</button>
+      <p id="vid-label" style="font-style:italic;font-size:13px;color:#A89060;letter-spacing:.06em;margin:0">Video 1 / 3</p>
+      <button onclick="nextVideo()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:#E8C96A;border-radius:20px;padding:6px 16px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:14px">Video Berikutnya →</button>
+    </div>
   </div>
 
 <!-- Photo caption overlay — shows below frame in 3D -->
@@ -194,17 +250,53 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
   transform:translateX(-50%);display:none;gap:6px">
 </div>
 
+<div class="modal" id="gal-modal">
+  <button class="modal-close" onclick="closeModal('gal-modal');galResetZoom()">✕</button>
+  <!-- Zoom container -->
+  <div id="gal-zoom-wrap" style="width:min(540px,86vw);aspect-ratio:4/3;
+    border:1.5px solid rgba(201,168,76,.5);border-radius:10px;overflow:hidden;
+    background:#1A4A30;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 60px rgba(0,0,0,.7);position:relative;cursor:zoom-in">
+    <img id="gal-img" src="" alt=""
+      style="width:100%;height:100%;object-fit:cover;display:none;
+        transform-origin:center center;transition:transform .25s ease;user-select:none"
+      onclick="galToggleZoom(event)"
+      ondblclick="galResetZoom()"/>
+    <div id="gal-ph" style="display:flex;flex-direction:column;align-items:center;gap:10px;
+      color:rgba(201,168,76,.45);font-size:14px;text-align:center;padding:20px">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.4)" stroke-width="1.4">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span>Memuat foto...</span>
+    </div>
+    <!-- Zoom hint -->
+    <div id="gal-zoom-hint" style="position:absolute;bottom:8px;right:10px;
+      font-size:11px;color:rgba(255,255,255,0.45);font-style:italic;pointer-events:none">
+      Klik untuk zoom · Scroll untuk zoom · Double klik reset
+    </div>
+  </div>
+  <p id="gal-cap" style="font-style:italic;font-size:14px;color:#A89060;letter-spacing:.06em"></p>
+  <div style="display:flex;gap:12px;align-items:center">
+    <button class="lb-btn" onclick="navGal(-1);galResetZoom()">← Sebelumnya</button>
+    <button class="lb-btn" onclick="galResetZoom()" style="font-size:12px;padding:5px 12px">⟳ Reset Zoom</button>
+    <button class="lb-btn" onclick="navGal(1);galResetZoom()">Selanjutnya →</button>
+  </div>
+</div>
+
 <div class="modal" id="door-modal">
   <button class="modal-close" onclick="closeModal('door-modal')">✕</button>
   <div class="msg">
-    <div class="ar">أهلاً وسهلاً</div>
-    <div class="dt" id="door-title">Selamat Datang!</div>
-    <div class="ds">Semoga Idul Fitri membawa keberkahan,<br>kedamaian, dan kebahagiaan.</div>
+    <div class="ar">تَقَبَّلَ اللهُ مِنَّا وَمِنْكُمْ</div>
+    <div class="dt" id="door-title">Mau mudik sekarang?</div>
+    <div class="ds">Hati-hati di jalan ya! 🚗<br>Semoga selamat sampai tujuan.</div>
     <div class="stars">✦ &nbsp; ✦ &nbsp; ✦</div>
   </div>
 </div>
 
-<div id="editor" style="position:fixed;top:10px;right:10px;z-index:500;font-family:monospace;font-size:12px;display:none;flex-direction:column;gap:6px;background:rgba(0,0,0,0.85);border:1px solid #C9A84C;border-radius:8px;padding:12px;width:260px;color:#F5E6B8">
+<div id="editor" style="position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:500;font-family:monospace;font-size:12px;display:none;flex-direction:row;flex-wrap:wrap;gap:10px;background:rgba(0,0,0,0.92);border:1px solid #C9A84C;border-radius:8px;padding:12px;width:98vw;max-width:1400px;color:#F5E6B8;align-items:flex-start;overflow-x:auto">
+  <div style="display:flex;flex-direction:column;gap:6px;min-width:220px">
     <div style="font-weight:bold;color:#C9A84C;margin-bottom:4px">🛠 Object Editor</div>
     <select id="ed-select" style="background:#111;color:#F5E6B8;border:1px solid #C9A84C;padding:4px;border-radius:4px"></select>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
@@ -216,24 +308,176 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:
     </div>
     <div id="ed-vals" style="color:#A89060;font-size:11px;line-height:1.6"></div>
     <button onclick="edCopy()" style="background:#C9A84C;color:#0a1f14;border:none;border-radius:4px;padding:5px;cursor:pointer;font-weight:bold">📋 Copy Position Code</button>
-    <div style="color:#A89060;font-size:10px;margin-top:2px">Press <b style="color:#F5E6B8">E</b> to toggle · Click object to select</div>
   </div>
+  <!-- Animation editor -->
+  <div style="min-width:220px;border-left:1px solid rgba(201,168,76,.2);padding-left:10px">
+    <div style="font-size:10px;color:#C9A84C;margin-bottom:6px;letter-spacing:.06em">ENTRANCE ANIMATION</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
+      <span>Duration</span><input id="ed-dur" type="range" min="500" max="6000" step="100" value="2800" oninput="document.getElementById('ed-dur-val').textContent=this.value+'ms'">
+      <span></span><span id="ed-dur-val" style="font-size:10px;color:#A89060">2800ms</span>
+      <span>Door wait</span><input id="ed-doorwait" type="range" min="0" max="2000" step="100" value="0" oninput="document.getElementById('ed-dw-val').textContent=this.value+'ms'">
+      <span></span><span id="ed-dw-val" style="font-size:10px;color:#A89060">0ms</span>
+      <span>Easing</span>
+      <select id="ed-ease" style="background:#111;color:#F5E6B8;border:1px solid #C9A84C;padding:2px;border-radius:4px;font-size:11px">
+        <option value="easeInOut">Ease In-Out</option>
+        <option value="easeOut">Ease Out</option>
+        <option value="easeIn">Ease In</option>
+        <option value="linear">Linear</option>
+        <option value="spring">Spring</option>
+        <option value="bounce">Bounce</option>
+      </select>
+      <span style="color:#A89060;font-size:10px">— Start —</span><span></span>
+      <span>Pos X</span><input id="ed-sx" type="range" min="-8" max="8" step="0.1" value="4.95" oninput="edUpdateStart()">
+      <span>Pos Y</span><input id="ed-sy" type="range" min="0" max="6" step="0.1" value="1.8" oninput="edUpdateStart()">
+      <span>Pos Z</span><input id="ed-sz" type="range" min="-6" max="8" step="0.1" value="-2.8" oninput="edUpdateStart()">
+      <span>Yaw</span><input id="ed-stx" type="range" min="-3.14" max="3.14" step="0.02" value="-1.5" oninput="edUpdateStart()">
+      <span>Pitch</span><input id="ed-sty" type="range" min="-1.0" max="1.0" step="0.01" value="0" oninput="edUpdateStart()">
+      <span style="color:#A89060;font-size:10px">— End —</span><span></span>
+      <span>Pos X</span><input id="ed-ex" type="range" min="-8" max="8" step="0.1" value="5.5" oninput="edPreviewEnd()">
+      <span>Pos Y</span><input id="ed-ey" type="range" min="0" max="8" step="0.1" value="4.2" oninput="edPreviewEnd()">
+      <span>Pos Z</span><input id="ed-ez" type="range" min="-6" max="8" step="0.1" value="6.5" oninput="edPreviewEnd()">
+      <span>Yaw</span><input id="ed-etx" type="range" min="-3.14" max="3.14" step="0.02" value="-1.6" oninput="edPreviewEnd()">
+      <span>Pitch</span><input id="ed-ety" type="range" min="-1.0" max="1.0" step="0.01" value="0.1" oninput="edPreviewEnd()">
+      <div id="ed-pos-vals" style="color:#A89060;font-size:10px;grid-column:1/-1;line-height:1.7"></div>
+    </div>
+    <button onclick="edSnapStart()" style="background:#1A3A2A;color:#C9A84C;border:1px solid rgba(201,168,76,.3);border-radius:4px;padding:4px;cursor:pointer;width:100%;margin-top:4px;font-size:10px">📍 Snap Start = Current Camera</button>
+    <button onclick="edSnapEnd()" style="background:#1A3A2A;color:#C9A84C;border:1px solid rgba(201,168,76,.3);border-radius:4px;padding:4px;cursor:pointer;width:100%;margin-top:3px;font-size:10px">📍 Snap End = Current Camera</button>
+    <button onclick="edTestAnim()" style="background:#1A4A30;color:#C9A84C;border:1px solid #C9A84C;border-radius:4px;padding:5px;cursor:pointer;width:100%;margin-top:6px;font-size:11px">▶ Test Entrance</button>
+    <button onclick="edCopyAnim()" style="background:#C9A84C;color:#0a1f14;border:none;border-radius:4px;padding:5px;cursor:pointer;width:100%;margin-top:4px;font-size:11px;font-weight:bold">📋 Copy Animation Code</button>
+    <div style="color:#A89060;font-size:10px;margin-top:6px">Press <b style="color:#F5E6B8">E</b> to toggle</div>
+  </div><!-- end anim col -->
+
+  <!-- Door editor col -->
+  <div style="min-width:200px;border-left:1px solid rgba(201,168,76,.2);padding-left:10px">
+    <div style="font-size:10px;color:#C9A84C;margin-bottom:6px;letter-spacing:.06em">DOOR ADJUST</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
+      <span>Pos X</span><input id="dr-px" type="range" min="-8" max="8" step="0.05" value="4.95" oninput="doorApply()">
+      <span>Pos Y</span><input id="dr-py" type="range" min="-2" max="4" step="0.05" value="0.00" oninput="doorApply()">
+      <span>Pos Z</span><input id="dr-pz" type="range" min="-6" max="6" step="0.05" value="-2.80" oninput="doorApply()">
+      <span>Rot Y</span><input id="dr-ry" type="range" min="-3.14" max="3.14" step="0.01" value="-1.58" oninput="doorApply()">
+      <span>Scale</span><input id="dr-sc" type="range" min="0.5" max="3" step="0.05" value="1.25" oninput="doorApply()">
+      <span>L open°</span><input id="dr-lo" type="range" min="-2" max="0" step="0.02" value="-1.43" oninput="doorApply()">
+      <span>R open°</span><input id="dr-ro" type="range" min="0" max="2" step="0.02" value="1.43" oninput="doorApply()">
+    </div>
+    <div id="dr-vals" style="color:#A89060;font-size:10px;margin-top:4px;line-height:1.6"></div>
+    <button onclick="doorTestOpen()" style="background:#1A4A30;color:#C9A84C;border:1px solid #C9A84C;border-radius:4px;padding:4px;cursor:pointer;width:100%;margin-top:5px;font-size:10px">🚪 Test Open/Close</button>
+    <button onclick="doorCopy()" style="background:#C9A84C;color:#0a1f14;border:none;border-radius:4px;padding:5px;cursor:pointer;width:100%;margin-top:3px;font-size:11px;font-weight:bold">📋 Copy Door Code</button>
+  </div><!-- end door col -->
+
+  <!-- Sit editor col -->
+  <div style="min-width:200px;border-left:1px solid rgba(201,168,76,.2);padding-left:10px">
+    <div style="font-size:10px;color:#C9A84C;margin-bottom:6px;letter-spacing:.06em">SIT POSITION</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
+      <span>Pos X</span><input id="sit-px" type="range" min="-5" max="5" step="0.05" value="0.05" oninput="sitApply()">
+      <span>Pos Z</span><input id="sit-pz" type="range" min="-5" max="5" step="0.05" value="0.4" oninput="sitApply()">
+      <span>Cam Y</span><input id="sit-py" type="range" min="0.3" max="1.5" step="0.02" value="0.72" oninput="sitApply()">
+      <span>Yaw</span><input id="sit-yw" type="range" min="-3.14" max="3.14" step="0.02" value="-1.58" oninput="sitApply()">
+      <span>Pitch</span><input id="sit-pt" type="range" min="-0.5" max="0.5" step="0.01" value="0.08" oninput="sitApply()">
+      <span>Radius</span><input id="sit-rd" type="range" min="0.5" max="4" step="0.1" value="2.2" oninput="sitApply()">
+    </div>
+    <div id="sit-vals" style="color:#A89060;font-size:10px;margin-top:4px;line-height:1.6"></div>
+    <button onclick="sitTestSit()" style="background:#1A4A30;color:#C9A84C;border:1px solid #C9A84C;border-radius:4px;padding:4px;cursor:pointer;width:100%;margin-top:5px;font-size:10px">🪑 Test Sit/Stand</button>
+    <button onclick="sitCopy()" style="background:#C9A84C;color:#0a1f14;border:none;border-radius:4px;padding:5px;cursor:pointer;width:100%;margin-top:3px;font-size:11px;font-weight:bold">📋 Copy Sit Code</button>
+  </div><!-- end sit col -->
+
+</div><!-- end editor -->
+
+  <!-- Welcome name modal -->
+<div id="welcome-modal" style="position:fixed;inset:0;z-index:9998;
+  background:rgba(10,31,20,0.97);display:flex;align-items:center;justify-content:center">
+  <div style="text-align:center;padding:48px 40px;max-width:440px;width:90%;
+    background:linear-gradient(160deg,#1A4A30,#0a1f14);
+    border:1.5px solid rgba(201,168,76,.45);border-radius:20px;
+    box-shadow:0 0 80px rgba(0,0,0,.7)">
+    <!-- Lantern icon -->
+    <div style="font-size:32px;margin-bottom:16px;opacity:0;animation:wFadeUp .7s ease .2s forwards">🪔</div>
+    <!-- Arabic -->
+    <p style="font-size:40px;letter-spacing:.18em;color:#E8C96A;text-transform:uppercase;
+      margin-bottom:8px;opacity:0;animation:wFadeUp .7s ease .4s forwards">عيد مبارك</p>
+    <!-- Title -->
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,32px);
+      font-weight:700;color:#F5E6B8;line-height:1.25;margin-bottom:8px;
+      opacity:0;animation:wFadeUp .7s ease .5s forwards">
+      Selamat Hari Raya<br>Idul Fitri 1447 H
+    </h2>
+    <!-- Sub -->
+    <p style="font-style:italic;font-size:20px;color:#A89060;margin-bottom:28px;
+      opacity:0;animation:wFadeUp .7s ease .6s forwards">
+      Minal Aidin Wal Faizin
+    </p>
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;
+      opacity:0;animation:wFadeUp .7s ease .7s forwards">
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.5))"></div>
+      <div style="width:6px;height:6px;background:#C9A84C;transform:rotate(45deg)"></div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.5),transparent)"></div>
+    </div>
+    <!-- Question -->
+    <p style="font-size:20px;color:#C9A84C;margin-bottom:14px;letter-spacing:.04em;
+      opacity:0;animation:wFadeUp .7s ease .8s forwards">
+      Siapa nama Anda?
+    </p>
+    <!-- Input -->
+    <input id="welcome-name" type="text" placeholder="Ketik nama Anda…" maxlength="28"
+      onkeydown="if(event.key==='Enter')enterRoom()"
+      style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.4);
+        border-radius:24px;padding:10px 20px;width:100%;
+        font-family:'Cormorant Garamond',serif;font-size:16px;color:#F5E6B8;
+        outline:none;text-align:center;margin-bottom:12px;
+        opacity:0;animation:wFadeUp .7s ease .9s forwards"/>
+    <!-- Button -->
+    <button onclick="enterRoom()"
+      style="background:linear-gradient(135deg,#C9A84C,#8B6A20);border:none;
+        border-radius:24px;padding:11px 32px;
+        font-family:'Playfair Display',serif;font-size:15px;font-weight:700;
+        color:#0a1f14;cursor:pointer;letter-spacing:.06em;width:100%;
+        opacity:0;animation:wFadeUp .7s ease 1s forwards;transition:opacity .2s">
+      ✦ Masuk ke Ruangan
+    </button>
+    <p style="font-size:24px;color:rgba(201,168,76,0.7);margin-top:20px;font-style:italic;letter-spacing:.04em;
+      opacity:0;animation:wFadeUp .7s ease 1.1s forwards;line-height:1.4">
+      Made by<br>
+      Fernando (TT23090028)<br>
+      Fathurrasyid (TT24110467)
+    </p>
+  </div>
+</div>
+<style>
+@keyframes wFadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 // ══════════════════════════════════════════════
 //  CUSTOMIZE HERE
 // ══════════════════════════════════════════════
-const VIDEO_SRC = 'https://drive.google.com/uc?export=download&id=1RpLWg41-1y86zmQ3FCVvH21bMsylbJAl';
+const VIDEOS = [
+  'https://res.cloudinary.com/dcv79effn/video/upload/video2.mp4',
+  'https://res.cloudinary.com/dcv79effn/video/upload/video3_nehfdh.mp4', 
+];
+let currentVideoIdx = 0;
+const bgTracks = [
+  'https://res.cloudinary.com/dcv79effn/video/upload/v1773817586/minal.mp3',
+  'https://res.cloudinary.com/dcv79effn/video/upload/v1773817586/minal.mp3',
+];
+let bgTrackIdx = 0;
+
+function playNextTrack(){
+  const bgm = document.getElementById('bg-music');
+  bgm.src = bgTracks[bgTrackIdx];
+  bgm.play().catch(()=>{});
+  bgTrackIdx = (bgTrackIdx+1) % bgTracks.length;
+}
 const photos = [
-  { src:'', caption:'Tim Marketing – Lebaran 1446H' },
-  { src:'', caption:'Tim Teknologi – Lebaran 1446H' },
-  { src:'', caption:'Tim Operasional – Lebaran 1446H' },
-  { src:'', caption:'Tim Keuangan – Lebaran 1446H' },
-  { src:'', caption:'All Hands – Lebaran 1446H' },
-  { src:'', caption:'Halal Bihalal 1446H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image2.jpg', caption:'Penyambutan Mr.Kang – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image1.jpg', caption:'Bukber HR – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image3.jpg', caption:'Bukber HR – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image4.jpg', caption:'Bukber HR – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image5.jpg', caption:'Bukber HR – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image8.jpg', caption:'Bukber HR – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image6.jpg', caption:'HR Sport Dinner – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image7.jpg', caption:'HR Sport Dinner – Lebaran 1447H' },
+  { src:'https://res.cloudinary.com/dcv79effn/image/upload/image9.jpg', caption:'HR Sport Dinner – Lebaran 1447H' },
 ];
 
 // ══════════════════════════════════════════════
@@ -251,19 +495,201 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a1f14);
 scene.fog = new THREE.FogExp2(0x0a1f14, 0.045);
 
-// Camera — fixed corner-view angle
-const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
-camera.position.set(5.5, 4.2, 6.5);
-camera.lookAt(0, 0.8, 0);
+const camera = new THREE.PerspectiveCamera(75, 1, 0.05, 100);
+camera.position.set(5.5, 1.95, 6.5);
 
-const controls = new THREE.OrbitControls(camera, canvas);
-controls.target.set(0, 0.8, 0);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.minDistance = 3;
-controls.maxDistance = 14;
-controls.maxPolarAngle = Math.PI / 2.1; // prevent going below floor
-controls.update();
+// ══════════════════════════════════════════════
+//  FPS STATE
+// ══════════════════════════════════════════════
+const fps = {
+  yaw:   -2.4,   // horizontal look (radians)
+  pitch:  0.0,   // vertical look (clamped)
+  speed:  0.06,
+  keys:  {},
+};
+
+const FPS_START = { x:5.5, y:1.95, z:6.5, yaw:-2.4, pitch:0 };
+
+// Sit state
+let isSitting = false;
+let sitAnim = null;
+const STAND_Y = 1.95;
+const SIT_Y   = 1.25;
+const SIT_POS = { x:0, z:-0.65 };
+const SIT_YAW   = -3.14;
+const SIT_PITCH = -0.15;
+
+function fpsApply(){
+  const dir = new THREE.Vector3(
+    Math.cos(fps.pitch)*Math.sin(fps.yaw),
+    Math.sin(fps.pitch),
+    Math.cos(fps.pitch)*Math.cos(fps.yaw)
+  );
+  camera.lookAt(camera.position.clone().add(dir));
+}
+fpsApply();
+
+// ── COLLIDERS (AABB x1,z1 → x2,z2) ──
+const colliders = [
+  { x1:-5.2, z1:-5.0, x2: 5.2, z2:-4.3 },  // back wall
+  { x1:-5.2, z1:-5.0, x2:-4.5, z2: 5.0 },  // left wall
+  { x1: 4.5, z1:-5.0, x2: 5.2, z2: 5.0 },  // right wall
+  { x1:-5.2, z1: 4.3, x2: 5.2, z2: 5.2 },  // front wall
+  { x1:-1.4, z1:-0.3, x2: 1.4, z2: 0.9 },  // sofa
+  { x1:-0.8, z1:-2.6, x2: 1.4, z2:-1.3 },  // coffee table
+  { x1:-1.8, z1:-4.4, x2: 1.8, z2:-3.6 },  // TV console
+];
+const CAM_R = 0.3;
+
+function isColliding(x, z){
+  for(const b of colliders){
+    if(x+CAM_R>b.x1 && x-CAM_R<b.x2 && z+CAM_R>b.z1 && z-CAM_R<b.z2) return true;
+  }
+  return false;
+}
+
+function tryMove(dx, dz){
+  const nx = camera.position.x + dx;
+  const nz = camera.position.z + dz;
+  if(!isColliding(nx, nz)){
+    camera.position.x = nx;
+    camera.position.z = nz;
+  } else if(!isColliding(nx, camera.position.z)){
+    camera.position.x = nx;
+  } else if(!isColliding(camera.position.x, nz)){
+    camera.position.z = nz;
+  }
+}
+
+// ── POINTER LOCK ──
+let pointerLocked = false;
+
+canvas.addEventListener('click', ()=>{
+  if(!pointerLocked && !document.getElementById('welcome-modal').style.display==='none') return;
+  canvas.requestPointerLock();
+});
+
+document.addEventListener('pointerlockchange', ()=>{
+  pointerLocked = document.pointerLockElement === canvas;
+  document.getElementById('lock-hint').style.opacity  = pointerLocked ? '0' : '1';
+  document.getElementById('crosshair').style.opacity  = pointerLocked ? '1' : '0';
+});
+
+let skipFirstMove = false;
+document.addEventListener('pointerlockchange', ()=>{
+  if(document.pointerLockElement === canvas) skipFirstMove = true;
+});
+
+document.addEventListener('mousemove', e=>{
+  if(!pointerLocked) return;
+  if(skipFirstMove){ skipFirstMove = false; return; }
+  // Clamp max delta per frame to prevent spike jumps
+  const dx = Math.max(-50, Math.min(50, e.movementX));
+  const dy = Math.max(-50, Math.min(50, e.movementY));
+  fps.yaw   -= dx * 0.002;
+  fps.pitch  = Math.max(-Math.PI/3, Math.min(Math.PI/3, fps.pitch - dy * 0.002));
+  fpsApply();
+});
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e=>{
+  fps.keys[e.code] = true;
+  if(e.key==='Escape'){
+    pauseYT(); closeModal('door-modal');
+    if(pointerLocked) document.exitPointerLock();
+  }
+  if(e.code==='KeyF') toggleSit();
+});
+document.addEventListener('keyup', e=>{ fps.keys[e.code]=false; });
+
+// ── FPS TICK (called from animate loop) ──
+function fpsTick(){
+  if(!pointerLocked) return;
+  if(isSitting){
+    // Allow looking around while seated, block movement
+    camera.position.y = SIT_Y;
+    fpsApply();
+    return;
+  }
+  const s = fps.speed;
+  const sy = Math.sin(fps.yaw), cy = Math.cos(fps.yaw);
+  if(fps.keys['KeyW']||fps.keys['ArrowUp'])    tryMove( sy*s,  cy*s);
+  if(fps.keys['KeyS']||fps.keys['ArrowDown'])  tryMove(-sy*s, -cy*s);
+  if(fps.keys['KeyA']||fps.keys['ArrowLeft'])  tryMove( cy*s, -sy*s);
+  if(fps.keys['KeyD']||fps.keys['ArrowRight']) tryMove(-cy*s,  sy*s);
+  camera.position.y = STAND_Y;
+  fpsApply();
+
+  const hint = document.getElementById('hint');
+  if(nearSofa() && !isSitting){
+    hint.textContent = 'Tekan F untuk duduk';
+    hint.classList.add('visible');
+  } else if(!isSitting){
+    hint.classList.remove('visible');
+  }
+}
+
+function resetCamera(){
+  camera.position.set(FPS_START.x, FPS_START.y, FPS_START.z);
+  fps.yaw   = FPS_START.yaw;
+  fps.pitch = FPS_START.pitch;
+  fpsApply();
+}
+
+function nearSofa(){
+  const dx = camera.position.x - SIT_POS.x;
+  const dz = camera.position.z - SIT_POS.z;
+  return Math.sqrt(dx*dx+dz*dz) < 3;
+}
+
+function toggleSit(){
+  if(!nearSofa() && !isSitting) return; // too far, ignore
+  isSitting = !isSitting;
+  const targetY   = isSitting ? SIT_Y   : STAND_Y;
+  const targetX   = isSitting ? SIT_POS.x : camera.position.x;
+  const targetZ   = isSitting ? SIT_POS.z : camera.position.z;
+  const targetYaw = isSitting ? SIT_YAW   : fps.yaw;
+  const targetPitch = isSitting ? SIT_PITCH : 0;
+
+  // Update hint
+  const hint = document.getElementById('hint');
+  if(isSitting){
+    hint.textContent = 'Tekan F untuk berdiri';
+    hint.classList.add('visible');
+  } else {
+    hint.classList.remove('visible');
+  }
+
+  // Cancel any running anim
+  if(sitAnim) cancelAnimationFrame(sitAnim);
+
+  const startY     = camera.position.y;
+  const startX     = camera.position.x;
+  const startZ     = camera.position.z;
+  const startYaw   = fps.yaw;
+  const startPitch = fps.pitch;
+  const duration   = 600;
+  const startT     = performance.now();
+
+  function step(now){
+    const p = Math.min((now-startT)/duration, 1);
+    // Smooth ease out
+    const e = 1-Math.pow(1-p, 3);
+    camera.position.y = startY   + (targetY-startY)*e;
+    camera.position.x = startX   + (targetX-startX)*e;
+    camera.position.z = startZ   + (targetZ-startZ)*e;
+    fps.yaw   = startYaw   + (targetYaw-startYaw)*e;
+    fps.pitch = startPitch + (targetPitch-startPitch)*e;
+    fpsApply();
+    if(p < 1) sitAnim = requestAnimationFrame(step);
+    else sitAnim = null;
+  }
+  sitAnim = requestAnimationFrame(step);
+}
+
+// Stub these out — buttons still call them but orbit is gone
+function orbitDelta(){}
+function walkDelta(){}
 
 function resize(){
   const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -340,6 +766,57 @@ rwall.rotation.y=-Math.PI/2;
 rwall.position.set(roomW/2,roomH/2,0);
 scene.add(rwall);
 
+// ── FRONT WALL — split around window ──
+const WIN_Y_BOT=0.9, WIN_Y_TOP=4.2, WIN_H=WIN_Y_TOP-WIN_Y_BOT;
+const WIN_X_L=-1.8, WIN_X_R=1.8, WIN_W=WIN_X_R-WIN_X_L;
+const WCX=(WIN_X_L+WIN_X_R)/2, WCY=(WIN_Y_BOT+WIN_Y_TOP)/2, WZ=roomD/2-0.05;
+
+const fwTop  = plane(roomW, roomH-WIN_Y_TOP, C.wallL, 0.9);
+fwTop.rotation.y=Math.PI; fwTop.position.set(0,(WIN_Y_TOP+roomH)/2,roomD/2); scene.add(fwTop);
+
+const fwBot  = plane(roomW, WIN_Y_BOT, C.wallL, 0.9);
+fwBot.rotation.y=Math.PI; fwBot.position.set(0,WIN_Y_BOT/2,roomD/2); scene.add(fwBot);
+
+const fwLeft = plane(roomW/2+WIN_X_L, WIN_H, C.wallL, 0.9);
+fwLeft.rotation.y=Math.PI; fwLeft.position.set((-roomW/2+WIN_X_L)/2,WCY,roomD/2); scene.add(fwLeft);
+
+const fwRight= plane(roomW/2-WIN_X_R, WIN_H, C.wallL, 0.9);
+fwRight.rotation.y=Math.PI; fwRight.position.set((WIN_X_R+roomW/2)/2,WCY,roomD/2); scene.add(fwRight);
+
+// Scenery outside window
+const blissTex = new THREE.TextureLoader().load('https://picsum.photos/seed/bliss/1280/800');
+const scenery = new THREE.Mesh(
+  new THREE.PlaneGeometry(WIN_W+0.4,WIN_H+0.3),
+  new THREE.MeshBasicMaterial({map:blissTex,side:THREE.DoubleSide})
+);
+scenery.rotation.y=Math.PI;
+scenery.position.set(WCX,WCY,roomD/2+0.5); scene.add(scenery);
+
+// Glass pane
+const winGlass = new THREE.Mesh(
+  new THREE.PlaneGeometry(WIN_W,WIN_H),
+  new THREE.MeshStandardMaterial({color:0xB8DEFF,roughness:0.05,metalness:0.1,transparent:true,opacity:0.18})
+);
+winGlass.rotation.y=Math.PI;
+winGlass.position.set(WCX,WCY,WZ); scene.add(winGlass);
+
+// Window frame bars
+const winBarM = new THREE.MeshStandardMaterial({color:0x222222,roughness:0.7,metalness:0.3});
+function winBar(w,h,d,px,py,pz){
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),winBarM);
+  b.position.set(px,py,pz); scene.add(b);
+}
+winBar(WIN_W+0.1,0.07,0.1, WCX,WIN_Y_TOP,WZ);
+winBar(WIN_W+0.1,0.07,0.1, WCX,WIN_Y_BOT,WZ);
+winBar(0.07,WIN_H+0.07,0.1, WIN_X_L,WCY,WZ);
+winBar(0.07,WIN_H+0.07,0.1, WIN_X_R,WCY,WZ);
+winBar(WIN_W,0.06,0.08, WCX,WCY,WZ);
+winBar(0.06,WIN_H,0.08, WCX,WCY,WZ);
+
+// Daylight from window
+const winL = new THREE.PointLight(0xFFF5E0,1.2,12);
+winL.position.set(WCX,WCY,roomD/2-1.5); scene.add(winL);
+
 // ── GEOMETRIC WALLPAPER PATTERN (canvas texture) ──
 function makeWallTexture(col1, col2, size=256){
   const cv = document.createElement('canvas');
@@ -368,7 +845,9 @@ function makeWallTexture(col1, col2, size=256){
 }
 
 const wallTex = makeWallTexture('#1E5535','#C9A84C');
-[bwall,lwall,rwall].forEach(w=>{ w.material.map=wallTex; w.material.needsUpdate=true; });
+[bwall,lwall,rwall,fwTop,fwBot,fwLeft,fwRight].forEach(w=>{
+  w.material.map=wallTex; w.material.needsUpdate=true;
+});
 
 // ── GOLD SKIRTING / TRIM LINES ──
 function goldTrim(pts, yw){
@@ -505,26 +984,116 @@ screenCV.width=512; screenCV.height=288;
 const sCtx = screenCV.getContext('2d');
 
 function drawTVIdle(){
-  // Background gradient
-  const grad = sCtx.createRadialGradient(256,144,10,256,144,260);
-  grad.addColorStop(0,'#1A6B9A'); grad.addColorStop(1,'#061620');
-  sCtx.fillStyle=grad; sCtx.fillRect(0,0,512,288);
+  const W=512, H=288;
+  sCtx.clearRect(0,0,W,H);
+
+  // Background
+  const bg = sCtx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#1a6ea8'); bg.addColorStop(1,'#0d3d66');
+  sCtx.fillStyle=bg; sCtx.fillRect(0,0,W,H);
+
+  // Vignette
+  const vig = sCtx.createRadialGradient(W/2,H/2,80,W/2,H/2,260);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.5)');
+  sCtx.fillStyle=vig; sCtx.fillRect(0,0,W,H);
+
+  // N SERIES logo
+  sCtx.fillStyle='#E50914';
+  sCtx.font='bold 14px Arial'; sCtx.textAlign='left';
+  sCtx.fillText('N', 16, 24);
+  sCtx.fillStyle='white';
+  sCtx.font='bold 9px Arial';
+  sCtx.fillText('SERIES', 28, 23);
+
+  // Film strip right
+  sCtx.fillStyle='rgba(0,0,0,0.65)';
+  sCtx.fillRect(295,0,217,H);
+  for(let i=0;i<8;i++){
+    const x=302+i*25;
+    sCtx.fillStyle='#1a6ea8';
+    sCtx.beginPath();
+    if(sCtx.roundRect) sCtx.roundRect(x,3,14,9,2);
+    else sCtx.rect(x,3,14,9);
+    sCtx.fill();
+    sCtx.beginPath();
+    if(sCtx.roundRect) sCtx.roundRect(x,276,14,9,2);
+    else sCtx.rect(x,276,14,9);
+    sCtx.fill();
+  }
+  // Film strip photo areas
+  // Film strip — draw image2 and image3 if loaded
+  if(tvFilmImg1.complete && tvFilmImg1.naturalWidth>0){
+    sCtx.drawImage(tvFilmImg1,300,16,207,118);
+  } else {
+    sCtx.fillStyle='rgba(255,255,255,0.07)'; sCtx.fillRect(300,16,207,118);
+  }
+  if(tvFilmImg2.complete && tvFilmImg2.naturalWidth>0){
+    sCtx.drawImage(tvFilmImg2,300,152,207,118);
+  } else {
+    sCtx.fillStyle='rgba(255,255,255,0.07)'; sCtx.fillRect(300,152,207,118);
+  }
+  // Play button on film
+  sCtx.fillStyle='rgba(0,0,0,0.5)';
+  sCtx.beginPath(); sCtx.arc(403,75,18,0,Math.PI*2); sCtx.fill();
+  sCtx.fillStyle='white';
+  sCtx.beginPath(); sCtx.moveTo(396,65); sCtx.lineTo(396,85); sCtx.lineTo(416,75); sCtx.closePath(); sCtx.fill();
+
+  // Match + metadata row
+  sCtx.fillStyle='#46d369';
+  sCtx.font='bold 9px Arial'; sCtx.textAlign='left';
+  sCtx.fillText('99% Match', 16, 42);
+  sCtx.fillStyle='rgba(255,255,255,0.7)';
+  sCtx.font='9px Arial';
+  sCtx.fillText('2026', 100, 42);
+  sCtx.strokeStyle='rgba(255,255,255,0.5)'; sCtx.lineWidth=0.8;
+  sCtx.strokeRect(122,33,20,11);
+  sCtx.fillText('21+',123,42);
+  sCtx.fillText('5 Seasons',148,42);
+
+  // Title
+  sCtx.fillStyle='white';
+  sCtx.font='bold 26px Arial'; sCtx.textAlign='left';
+  sCtx.fillText('LIBUR LEBARAN',16,72);
+  sCtx.fillText('HR SENANG',16,100);
+
+  // Description lines
+  sCtx.fillStyle='rgba(255,255,255,0.78)';
+  sCtx.font='8.5px Arial';
+  const lines = [
+    'Selamat Lebaran dari Tim HR! Kami mohon maaf lahir batin,',
+    'terutama kalau aturan absen suka bikin pusing. Tapi soal',
+    'gaji, kami jamin: nggak pernah telat, nggak pernah kelewat,',
+    'dan nggak pernah ghosting. Pokoknya lebih nyenengin daripada',
+    'si tukang nanya "Kapan ...?" waktu silaturahim.',
+  ];
+  lines.forEach((l,i) => sCtx.fillText(l, 16, 116+i*13));
+
+  // Play button
+  sCtx.fillStyle='white';
+  sCtx.beginPath();
+  if(sCtx.roundRect) sCtx.roundRect(16,186,64,22,3);
+  else sCtx.rect(16,186,64,22);
+  sCtx.fill();
+  sCtx.fillStyle='black';
+  sCtx.font='bold 8px Arial'; sCtx.textAlign='center';
+  sCtx.beginPath(); sCtx.moveTo(27,193); sCtx.lineTo(27,202); sCtx.lineTo(35,197); sCtx.closePath(); sCtx.fill();
+  sCtx.fillText('Play', 50, 200);
+
+  // My List button
+  sCtx.fillStyle='rgba(80,80,80,0.75)';
+  sCtx.beginPath();
+  if(sCtx.roundRect) sCtx.roundRect(86,186,72,22,3);
+  else sCtx.rect(86,186,72,22);
+  sCtx.fill();
+  sCtx.fillStyle='white';
+  sCtx.font='bold 8px Arial';
+  sCtx.fillText('+ My List', 122, 200);
+
   // Scanlines
-  sCtx.strokeStyle='rgba(0,0,0,0.15)'; sCtx.lineWidth=1;
-  for(let y=0;y<288;y+=3){ sCtx.beginPath();sCtx.moveTo(0,y);sCtx.lineTo(512,y);sCtx.stroke(); }
-  // Play circle
-  sCtx.strokeStyle='rgba(201,168,76,0.85)'; sCtx.lineWidth=3;
-  sCtx.beginPath(); sCtx.arc(256,130,38,0,Math.PI*2); sCtx.stroke();
-  sCtx.fillStyle='rgba(201,168,76,0.85)';
-  sCtx.beginPath(); sCtx.moveTo(244,112); sCtx.lineTo(244,148); sCtx.lineTo(278,130); sCtx.closePath(); sCtx.fill();
-  // Text
-  sCtx.fillStyle='rgba(201,168,76,0.7)';
-  sCtx.font='bold 15px serif'; sCtx.textAlign='center';
-  sCtx.fillText('Klik untuk memutar video',256,196);
-  sCtx.font='italic 13px serif'; sCtx.fillStyle='rgba(201,168,76,0.45)';
-  sCtx.fillText('Lebaran 1446 H',256,220);
+  sCtx.strokeStyle='rgba(0,0,0,0.05)'; sCtx.lineWidth=1;
+  for(let y=0;y<H;y+=2){ sCtx.beginPath();sCtx.moveTo(0,y);sCtx.lineTo(W,y);sCtx.stroke(); }
 }
-drawTVIdle();
+
 const screenTex = new THREE.CanvasTexture(screenCV);
 const screenG = new THREE.PlaneGeometry(1.76,0.99);
 const screenM = new THREE.MeshStandardMaterial({
@@ -533,6 +1102,25 @@ const screenM = new THREE.MeshStandardMaterial({
 });
 const screen = new THREE.Mesh(screenG,screenM);
 screen.position.z=0.073; screen.name='tv';
+
+// Preload film strip images for TV
+const tvFilmImg1 = new Image();
+tvFilmImg1.crossOrigin='anonymous';
+tvFilmImg1.src='https://res.cloudinary.com/dcv79effn/image/upload/image2.jpg'; // ← ganti
+tvFilmImg1.onload=()=>{ drawTVIdle(); screenTex.needsUpdate=true; };
+
+const tvFilmImg2 = new Image();
+tvFilmImg2.crossOrigin='anonymous';
+tvFilmImg2.src='https://res.cloudinary.com/dcv79effn/image/upload/image3.jpg'; // ← ganti
+tvFilmImg2.onload=()=>{ drawTVIdle(); screenTex.needsUpdate=true; };
+
+drawTVIdle();
+screenTex.needsUpdate=true;
+
+function drawTVWithName(name){
+  drawTVIdle();
+  screenTex.needsUpdate=true;
+}
 
 tvGroup.add(tvBack,bezel,bEdge,screen);
 tvGroup.position.set(0.05,2.35,-4.45);
@@ -599,64 +1187,200 @@ frameGroup.scale.set(3.00,3.00,3.00);
 scene.add(frameGroup);
 
 // ══════════════════════════════════════════════
-//  DOOR (right wall)
+//  DOUBLE DOOR (right wall) — ornate
 // ══════════════════════════════════════════════
 const doorGroup = new THREE.Group();
+const dfM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.85});
+const doorWoodM = new THREE.MeshStandardMaterial({color:0x3D1F08,roughness:0.6,metalness:0.05});
+const insetM = new THREE.MeshStandardMaterial({color:0x2A1204,roughness:0.75});
+const knobM = new THREE.MeshStandardMaterial({color:C.goldL,roughness:0.05,metalness:1.0});
+const goldThinM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.15,metalness:0.9});
 
-// Door frame
-const dfM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.25,metalness:0.75});
-[[0,1.6,0, 0.12,3.2,0.1],  // left jamb
- [1.12,1.6,0, 0.12,3.2,0.1], // right jamb
- [0.56,3.24,0, 1.34,0.12,0.1] // top
+// ── Outer frame ──
+// Left jamb, right jamb, top bar, threshold
+[[-0.02,1.7,0, 0.1,3.4,0.12],
+ [2.14,1.7,0,  0.1,3.4,0.12],
+ [1.06,3.42,0, 2.3,0.12,0.12],
+ [1.06,0.04,0, 2.3,0.08,0.12],
 ].forEach(([x,y,z,w,h,d])=>{
-  const fm = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),dfM);
-  fm.position.set(x,y,z); doorGroup.add(fm);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),dfM);
+  m.position.set(x,y,z); doorGroup.add(m);
 });
 
-// Door panel
-const doorM_ = new THREE.MeshStandardMaterial({color:C.doorW,roughness:0.7,metalness:0.05});
-const doorPanel = box(1.0,3.0,0.08,C.doorW,0.7,0.05);
-doorPanel.position.set(0.56,1.5,0.02);
-
-// Door panels inset (decorative recesses)
-const insetM = new THREE.MeshStandardMaterial({color:0x4A2E12,roughness:0.8});
-[[0.56,2.2,0.06, 0.7,0.9,0.04],
- [0.56,1.0,0.06, 0.7,0.9,0.04]].forEach(([x,y,z,w,h,d])=>{
-  const ip = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),insetM);
-  ip.position.set(x,y,z); doorGroup.add(ip);
+// ── Inner frame (double gold border) ──
+[[0.06,1.7,0, 0.05,3.2,0.1],[2.08,1.7,0,0.05,3.2,0.1],
+ [1.06,3.32,0,2.1,0.05,0.1],[1.06,0.1,0,2.1,0.05,0.1]
+].forEach(([x,y,z,w,h,d])=>{
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),goldThinM);
+  m.position.set(x,y,z); doorGroup.add(m);
 });
 
-// Gold door knob
-const knobM = new THREE.MeshStandardMaterial({color:C.goldL,roughness:0.1,metalness:0.9});
-const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8),knobM);
-knob.position.set(0.16,1.55,0.1);
+// ── LEFT door leaf ──
+const leftLeaf = new THREE.Group();
+const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(1.01,3.1,0.1),doorWoodM);
+leftPanel.position.set(0,0,0);
+// Decorative inset panels (3 rows)
+[[0,1.1,0.06, 0.68,0.7,0.04],
+ [0,0.0,0.06, 0.68,0.7,0.04],
+ [0,-1.0,0.06,0.68,0.6,0.04],
+].forEach(([x,y,z,w,h,d])=>{
+  const ip=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),insetM);
+  ip.position.set(x,y,z); leftLeaf.add(ip);
+  // Gold beading around inset
+  [[x,y+h/2+0.018,z+0.01,w+0.04,0.025,0.02],
+   [x,y-h/2-0.018,z+0.01,w+0.04,0.025,0.02],
+   [x-w/2-0.018,y,z+0.01,0.025,h+0.04,0.02],
+   [x+w/2+0.018,y,z+0.01,0.025,h+0.04,0.02],
+  ].forEach(([bx,by,bz,bw,bh,bd])=>{
+    const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),goldThinM);
+    b.position.set(bx,by,bz); leftLeaf.add(b);
+  });
+});
+// Gold vertical center strip
+const lcStrip=new THREE.Mesh(new THREE.BoxGeometry(0.02,3.1,0.02),goldThinM);
+lcStrip.position.set(0,0,0.06);
+// Left knob (right side of left leaf)
+const lKnob=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.12,12),knobM);
+lKnob.rotation.z=Math.PI/2; lKnob.position.set(0.35,0,0.1);
+const lKnobBase=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.22,0.04),goldThinM);
+lKnobBase.position.set(0.35,0,0.08);
+leftLeaf.add(leftPanel,lcStrip,lKnob,lKnobBase);
+leftLeaf.name='door';
+leftPanel.name='door'; lKnob.name='door';
+// Pivot from left edge
+const leftPivot = new THREE.Group();
+leftPivot.position.set(0.08,1.55,0.02);
+leftLeaf.position.set(0.46,0,0); // offset leaf so its left edge = pivot center
+leftPivot.add(leftLeaf);
+doorGroup.add(leftPivot);
 
-// Islamic arch above door (decorative)
-const archCV = document.createElement('canvas');
-archCV.width=200; archCV.height=120;
+// ── RIGHT door leaf ──
+const rightLeaf = new THREE.Group();
+const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(1.01,3.1,0.1),doorWoodM);
+[[0,1.1,0.06, 0.68,0.7,0.04],
+ [0,0.0,0.06, 0.68,0.7,0.04],
+ [0,-1.0,0.06,0.68,0.6,0.04],
+].forEach(([x,y,z,w,h,d])=>{
+  const ip=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),insetM);
+  ip.position.set(x,y,z); rightLeaf.add(ip);
+  [[x,y+h/2+0.018,z+0.01,w+0.04,0.025,0.02],
+   [x,y-h/2-0.018,z+0.01,w+0.04,0.025,0.02],
+   [x-w/2-0.018,y,z+0.01,0.025,h+0.04,0.02],
+   [x+w/2+0.018,y,z+0.01,0.025,h+0.04,0.02],
+  ].forEach(([bx,by,bz,bw,bh,bd])=>{
+    const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd),goldThinM);
+    b.position.set(bx,by,bz); rightLeaf.add(b);
+  });
+});
+const rcStrip=new THREE.Mesh(new THREE.BoxGeometry(0.02,3.1,0.02),goldThinM);
+rcStrip.position.set(0,0,0.06);
+const rKnob=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.12,12),knobM);
+rKnob.rotation.z=Math.PI/2; rKnob.position.set(-0.35,0,0.1);
+const rKnobBase=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.22,0.04),goldThinM);
+rKnobBase.position.set(-0.35,0,0.08);
+rightLeaf.add(rightPanel,rcStrip,rKnob,rKnobBase);
+rightLeaf.name='door';
+rightPanel.name='door'; rKnob.name='door';
+const rightPivot = new THREE.Group();
+rightPivot.position.set(2.04,1.55,0.02);
+rightLeaf.position.set(-0.46,0,0); // offset leaf so its right edge = pivot center
+rightPivot.add(rightLeaf);
+doorGroup.add(rightPivot);
+
+// ── Fanlight arch above doors ──
+const archCV=document.createElement('canvas');
+archCV.width=400; archCV.height=200;
 const aCtx=archCV.getContext('2d');
-aCtx.clearRect(0,0,200,120);
-aCtx.strokeStyle='rgba(201,168,76,0.7)'; aCtx.lineWidth=2;
-aCtx.beginPath(); aCtx.arc(100,120,90,Math.PI,0); aCtx.stroke();
-aCtx.beginPath(); aCtx.arc(100,120,70,Math.PI,0); aCtx.stroke();
-aCtx.fillStyle='rgba(201,168,76,0.5)'; aCtx.font='bold 28px serif';
-aCtx.textAlign='center'; aCtx.fillText('✦',100,80);
-const archTex = new THREE.CanvasTexture(archCV);
-const archMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.95,0.55),
-  new THREE.MeshStandardMaterial({map:archTex,transparent:true,roughness:0.8})
+aCtx.clearRect(0,0,400,200);
+// Arch fill
+const ag=aCtx.createRadialGradient(200,200,10,200,200,190);
+ag.addColorStop(0,'rgba(201,168,76,0.15)');
+ag.addColorStop(1,'rgba(201,168,76,0.03)');
+aCtx.fillStyle=ag;
+aCtx.beginPath(); aCtx.arc(200,200,185,Math.PI,0); aCtx.fill();
+// Arch rings
+[185,160,130].forEach(r=>{
+  aCtx.strokeStyle=`rgba(201,168,76,${r===185?0.8:0.4})`; aCtx.lineWidth=r===185?2.5:1.2;
+  aCtx.beginPath(); aCtx.arc(200,200,r,Math.PI,0); aCtx.stroke();
+});
+// Radial spokes
+for(let a=0;a<=Math.PI;a+=Math.PI/8){
+  aCtx.strokeStyle='rgba(201,168,76,0.25)'; aCtx.lineWidth=1;
+  aCtx.beginPath(); aCtx.moveTo(200,200);
+  aCtx.lineTo(200+185*Math.cos(a),200-185*Math.sin(a)); aCtx.stroke();
+}
+// Center star
+aCtx.fillStyle='rgba(201,168,76,0.7)'; aCtx.font='bold 36px serif';
+aCtx.textAlign='center'; aCtx.fillText('✦',200,130);
+const archTex=new THREE.CanvasTexture(archCV);
+const archMesh=new THREE.Mesh(
+  new THREE.PlaneGeometry(1.9,0.95),
+  new THREE.MeshStandardMaterial({map:archTex,transparent:true,roughness:0.8,side:THREE.DoubleSide})
 );
-archMesh.position.set(0.56,3.05,0.06);
+archMesh.position.set(1.06,3.3,0.04);
+doorGroup.add(archMesh);
 
-doorGroup.add(doorPanel,knob,archMesh);
+// ── Door step ──
+const step=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.06,0.3),
+  new THREE.MeshStandardMaterial({color:C.gold,roughness:0.3,metalness:0.7}));
+step.position.set(1.06,-0.01,0.1);
+doorGroup.add(step);
+
 doorGroup.name='door';
-doorPanel.name='door'; knob.name='door';
-
-// Rotate whole door group to face right wall
 doorGroup.rotation.y=-1.58;
 doorGroup.position.set(4.95,0.00,-2.80);
 doorGroup.scale.set(1.25,1.25,1.25);
 scene.add(doorGroup);
+
+// Store leaves for open animation
+let doorsOpen = false;
+
+// Easing functions
+const easings = {
+  linear:    p => p,
+  easeIn:    p => p*p*p,
+  easeOut:   p => 1-Math.pow(1-p,3),
+  easeInOut: p => p<0.5 ? 4*p*p*p : 1-Math.pow(-2*p+2,3)/2,
+  spring:    p => {
+    const c4 = (2*Math.PI)/3;
+    return p===0?0:p===1?1:Math.pow(2,-10*p)*Math.sin((p*10-0.75)*c4)+1;
+  },
+  bounce:    p => {
+    const n1=7.5625,d1=2.75;
+    if(p<1/d1) return n1*p*p;
+    if(p<2/d1) return n1*(p-=1.5/d1)*p+0.75;
+    if(p<2.5/d1) return n1*(p-=2.25/d1)*p+0.9375;
+    return n1*(p-=2.625/d1)*p+0.984375;
+  },
+};
+
+function animateDoor(targetL, targetR, duration, easeFn, onComplete){
+  const start = performance.now();
+  const fromL = leftPivot.rotation.y;
+  const fromR = rightPivot.rotation.y;
+  function swing(now){
+    const p = Math.min((now-start)/duration,1);
+    const e = easeFn(p);
+    leftPivot.rotation.y  = fromL + (targetL-fromL)*e;
+    rightPivot.rotation.y = fromR + (targetR-fromR)*e;
+    if(p<1) requestAnimationFrame(swing);
+    else if(onComplete) onComplete();
+  }
+  requestAnimationFrame(swing);
+}
+
+function animateDoorOpen(onComplete){
+  if(doorsOpen) return;
+  doorsOpen=true;
+  animateDoor(-Math.PI/2.2, Math.PI/2.2, 1200, easings.easeOut, onComplete);
+}
+
+function animateDoorClose(onComplete){
+  animateDoor(0, 0, 900, easings.spring, ()=>{
+    doorsOpen=false;
+    if(onComplete) onComplete();
+  });
+}
 
 // ══════════════════════════════════════════════
 //  SOFA (left area, facing TV)
@@ -850,6 +1574,56 @@ leaf.rotation.z=-0.5;
 scene.add(leaf);
 
 // ══════════════════════════════════════════════
+//  PEOPLE
+// ══════════════════════════════════════════════
+const skinM = new THREE.MeshStandardMaterial({color:0xE2B897,roughness:0.6});
+
+function makeLimb(w,h,d,col){
+  const geo=new THREE.BoxGeometry(w,h,d); geo.translate(0,-h/2,0);
+  return new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,roughness:0.9}));
+}
+
+// ── MAN ──
+const man = new THREE.Group();
+const mTorso = box(0.45,0.65,0.28,0xF0F0F0,0.9); mTorso.position.y=1.05;
+const mLegL  = box(0.18,0.62,0.2,0x222222,0.9);  mLegL.position.set(-0.12,0.31,0);
+const mLegR  = box(0.18,0.62,0.2,0x222222,0.9);  mLegR.position.set( 0.12,0.31,0);
+const mArmL  = makeLimb(0.14,0.56,0.14,0xF0F0F0); mArmL.position.set(-0.30,1.32,0); mArmL.rotation.z= 0.15;
+const mArmR  = makeLimb(0.14,0.56,0.14,0xF0F0F0); mArmR.position.set( 0.30,1.32,0); mArmR.rotation.z=-0.15;
+const mHead  = new THREE.Mesh(new THREE.SphereGeometry(0.17,32,32),skinM);
+mHead.position.set(0,1.52,0);
+const peci = new THREE.Mesh(new THREE.CylinderGeometry(0.165,0.165,0.11,32),
+  new THREE.MeshStandardMaterial({color:0x111111}));
+peci.position.set(0,1.635,0);
+man.add(mTorso,mLegL,mLegR,mArmL,mArmR,mHead,peci);
+man.position.set(-3.45,0,-3.40);
+man.rotation.y=-2.24;
+man.name='man';
+man.userData={isGreeting:false,originalArmRot:-0.15};
+scene.add(man);
+
+// ── WOMAN ──
+const woman = new THREE.Group();
+const wDress = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.42,1.05,32),
+  new THREE.MeshStandardMaterial({color:0x2D6B44,roughness:0.8}));
+wDress.position.y=0.525;
+const wTorso = box(0.38,0.38,0.24,0x2D6B44,0.8); wTorso.position.y=1.1;
+const wArmL  = makeLimb(0.12,0.52,0.12,0x2D6B44); wArmL.position.set(-0.26,1.28,0); wArmL.rotation.z= 0.15;
+const wArmR  = makeLimb(0.12,0.52,0.12,0x2D6B44); wArmR.position.set( 0.26,1.28,0); wArmR.rotation.z=-0.15;
+const hijabM = new THREE.MeshStandardMaterial({color:0xE8C96A,roughness:0.85,side:THREE.DoubleSide});
+const wHijabHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.18,32,32,0,Math.PI*2,0,Math.PI/1.35),hijabM);
+wHijabHead.position.set(0,1.50,0.04);
+const wHijabNeck = new THREE.Mesh(new THREE.TorusGeometry(0.13,0.055,8,32),hijabM);
+wHijabNeck.position.set(0,1.32,0.02); wHijabNeck.rotation.x=Math.PI/2+0.1;
+woman.add(wDress,wTorso,wArmL,wArmR,wHijabHead,wHijabNeck);
+woman.position.set(-4.20,0,-2.85);
+woman.rotation.y=-2.04;
+woman.name='woman';
+woman.userData={isGreeting:false,originalRotX:0};
+scene.add(woman);
+
+// ══════════════════════════════════════════════
 //  KETUPAT GARLAND (ceiling)
 // ══════════════════════════════════════════════
 const stringM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.4,metalness:0.5});
@@ -889,6 +1663,54 @@ scene.add(new THREE.Mesh(garlandG,stringM));
 });
 
 // ══════════════════════════════════════════════
+//  EDGE DESK
+// ══════════════════════════════════════════════
+const deskGroup = new THREE.Group();
+
+const deskTop = box(1.0,0.05,0.50,C.woodD,0.7,0.05);
+deskTop.position.set(0,0.75,0);
+
+[[-0.45,0,-0.22],[0.45,0,-0.22],[-0.45,0,0.22],[0.45,0,0.22]].forEach(([x,y,z])=>{
+  const leg=box(0.05,0.75,0.05,C.woodM,0.85);
+  leg.position.set(x,0.375,z); deskGroup.add(leg);
+});
+
+const deskBack=box(1.0,0.50,0.03,C.woodD,0.8);
+deskBack.position.set(0,0.40,-0.24);
+
+const deskTrim=new THREE.Mesh(
+  new THREE.BoxGeometry(1.02,0.018,0.018),
+  new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.85})
+);
+deskTrim.position.set(0,0.772,0.25);
+
+// Books
+const bookGroup = new THREE.Group();
+const book1=box(0.22,0.04,0.16,0x8B1A1A,0.8); book1.position.set(0,0.02,0);
+const book2=box(0.20,0.04,0.14,0x1A3A8B,0.8); book2.position.set(0.01,0.06,0.005);
+const book3=box(0.21,0.04,0.15,0x1A6B2A,0.8); book3.position.set(-0.005,0.10,-0.005);
+const spineM=new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.8});
+[book1,book2,book3].forEach(b=>{
+  const spine=new THREE.Mesh(new THREE.BoxGeometry(0.008,b.geometry.parameters.height,b.geometry.parameters.depth+0.002),spineM);
+  spine.position.set(-b.geometry.parameters.width/2,0,0);
+  b.add(spine);
+});
+bookGroup.add(book1,book2,book3);
+bookGroup.position.set(-0.2,0.775,-0.02);
+
+// Mug
+const mugGroup=new THREE.Group();
+const mug=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.075,10),
+  new THREE.MeshStandardMaterial({color:C.cream,roughness:0.5}));
+mugGroup.add(mug);
+mugGroup.position.set(0.2,0.813,-0.05);
+
+deskGroup.add(deskTop,deskBack,deskTrim,bookGroup,mugGroup);
+deskGroup.position.set(-4.55,0,4.25);
+deskGroup.rotation.y=-3.14;
+scene.add(deskGroup);
+
+// ══════════════════════════════════════════════
 //  RAYCASTING — CLICK DETECTION
 // ══════════════════════════════════════════════
 const raycaster = new THREE.Raycaster();
@@ -896,19 +1718,26 @@ const mouse = new THREE.Vector2();
 const clickLabel = document.getElementById('click-label');
 
 const interactable = {
-    tv:    { label:'▶ Putar Video Lebaran', action: ()=>toggleYT() },
-    frame: { label:'🖼 Foto Berikutnya →',  action: ()=>nextPhoto() },
-    door:  { label:'🚪 Buka Pintu',         action: ()=>openDoorModal() },
-    table: { label:'✦ Lihat Sajian Lebaran', action: ()=>showSnackToast() },
-  };
+  tv:    { label:'▶ Putar Video Lebaran', action: ()=>toggleYT() },
+  frame: { label:'🖼 Foto Berikutnya →',  action: ()=>nextPhoto() },
+  door:  { label:'🚪 Buka Pintu',         action: ()=>openDoorModal() },
+  table: { label:'✦ Lihat Sajian Lebaran', action: ()=>showSnackToast() },
+  man:   { label:'💬 Sapa Bapak', action: ()=>{ const n=document.getElementById('ban-title').textContent.split(',')[1]?.split('!')[0]?.trim()||''; triggerSpeech(man,  `Minal Aidin Wal Faizin${n?' '+n:''}! Mohon maaf lahir dan batin ya 🙏`); } },
+    woman: { label:'💬 Sapa Ibu',   action: ()=>{ const n=document.getElementById('ban-title').textContent.split(',')[1]?.split('!')[0]?.trim()||''; triggerSpeech(woman,`Selamat Hari Raya${n?' '+n:''}! Semoga berkah selalu 🌙✨`); } },
+};
 
-function getIntersect(e){
-  const rect = canvas.getBoundingClientRect();
-  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
-  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
-  raycaster.setFromCamera(mouse,camera);
-  return raycaster.intersectObjects(scene.children,true);
-}
+  function getIntersect(e){
+    if(pointerLocked){
+      // In FPS mode — raycast from screen center
+      mouse.set(0,0);
+    } else {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+      mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+    }
+    raycaster.setFromCamera(mouse,camera);
+    return raycaster.intersectObjects(scene.children,true);
+  }
 
 canvas.addEventListener('mousemove', e=>{
   const hits = getIntersect(e);
@@ -976,28 +1805,44 @@ function updateYTOverlay(){
 }
 
 function startYT(){
-    document.getElementById('vid-src').src = VIDEO_SRC;
-    vidPlayer.load();
-    vidPlayer.addEventListener('canplay', ()=>vidPlayer.play(), { once:true });
-    document.getElementById('yt-modal').classList.add('open');
-    ytPlaying = true;
-    screenM.emissiveIntensity = 0.05;
-    tvL.intensity = 0.2;
-    interactable.tv.label = '⏸ Pause';
-  }
+  document.getElementById('vid-src').src = VIDEOS[currentVideoIdx];
+  vidPlayer.load();
+  vidPlayer.addEventListener('canplay', ()=>vidPlayer.play(), { once:true });
+  document.getElementById('yt-modal').classList.add('open');
+  if(document.pointerLockElement===canvas) document.exitPointerLock();
+  ytPlaying = true;
+  screenM.emissiveIntensity = 0.05;
+  tvL.intensity = 0.2;
+  interactable.tv.label = '⏸ Pause';
+}
+
+function pauseYT(){
+  vidPlayer.pause();
+  document.getElementById('yt-modal').classList.remove('open');
+  ytPlaying = false;
+  screenM.emissiveIntensity = 0.28;
+  tvL.intensity = 0.6;
+  interactable.tv.label = '▶ Putar Video';
+  drawTVIdle();
+  screenTex.needsUpdate = true;
+}
+
+function prevVideo(){
+  currentVideoIdx=(currentVideoIdx-1+VIDEOS.length)%VIDEOS.length;
+  document.getElementById('vid-src').src=VIDEOS[currentVideoIdx];
+  vidPlayer.load();
+  vidPlayer.play();
+  document.getElementById('vid-label').textContent=`Video ${currentVideoIdx+1} / ${VIDEOS.length}`;
+}
+function nextVideo(){
+  currentVideoIdx=(currentVideoIdx+1)%VIDEOS.length;
+  document.getElementById('vid-src').src=VIDEOS[currentVideoIdx];
+  vidPlayer.load();
+  vidPlayer.play();
+  document.getElementById('vid-label').textContent=`Video ${currentVideoIdx+1} / ${VIDEOS.length}`;
+}
   
-  function pauseYT(){
-    vidPlayer.pause();
-    document.getElementById('yt-modal').classList.remove('open');
-    ytPlaying = false;
-    screenM.emissiveIntensity = 0.28;
-    tvL.intensity = 0.6;
-    interactable.tv.label = '▶ Putar Video';
-    drawTVIdle();
-    screenTex.needsUpdate = true;
-  }
-  
-  function toggleYT(){ ytPlaying ? pauseYT() : startYT(); }
+function toggleYT(){ ytPlaying ? pauseYT() : startYT(); }
 
 // ══════════════════════════════════════════════
 //  PHOTO FRAME — in-place texture swap
@@ -1117,13 +1962,146 @@ let frameHovered = false;
 // ══════════════════════════════════════════════
 interactable.tv.action    = toggleYT;
 interactable.tv.label     = '▶ Putar Video Lebaran';
-interactable.frame.action = nextPhoto;
-interactable.frame.label  = '🖼 Foto Berikutnya →';
+interactable.frame.action = ()=>openGalleryModal();
+interactable.frame.label  = '🖼 Lihat Foto Tim';
+
+// ── SPEECH BUBBLE ──
+let activeSpeaker=null, speechTimer=null;
+function triggerSpeech(personGroup, text){
+  const bubble=document.getElementById('speech-bubble');
+  bubble.textContent=text;
+  bubble.style.opacity='1';
+  activeSpeaker=personGroup;
+  if(personGroup===man){
+    man.userData.isGreeting=true;
+    setTimeout(()=>man.userData.isGreeting=false,3500);
+  } else {
+    woman.userData.isGreeting=true;
+    setTimeout(()=>woman.userData.isGreeting=false,3500);
+  }
+  clearTimeout(speechTimer);
+  speechTimer=setTimeout(()=>{ bubble.style.opacity='0'; activeSpeaker=null; },3500);
+}
+
+// ── GALLERY ZOOM ──
+let galZoom = 1;
+let galPanX = 0, galPanY = 0;
+let galIsPanning = false;
+let galPanStart = {x:0,y:0};
+
+function galApplyTransform(){
+  const img = document.getElementById('gal-img');
+  img.style.transform = `scale(${galZoom}) translate(${galPanX/galZoom}px,${galPanY/galZoom}px)`;
+  img.style.cursor = galZoom > 1 ? 'grab' : 'zoom-in';
+}
+
+function galToggleZoom(e){
+  const img = document.getElementById('gal-img');
+  if(galZoom === 1){
+    // Zoom into click point
+    const rect = img.getBoundingClientRect();
+    const cx = ((e.clientX - rect.left) / rect.width  - 0.5) * rect.width;
+    const cy = ((e.clientY - rect.top)  / rect.height - 0.5) * rect.height;
+    galZoom = 2.5;
+    galPanX = -cx * 1.2;
+    galPanY = -cy * 1.2;
+  } else {
+    galZoom = 1; galPanX = 0; galPanY = 0;
+  }
+  galApplyTransform();
+}
+
+function galResetZoom(){
+  galZoom=1; galPanX=0; galPanY=0;
+  galApplyTransform();
+}
+
+// Scroll to zoom
+document.addEventListener('wheel', e=>{
+  if(!document.getElementById('gal-modal').classList.contains('open')) return;
+  e.preventDefault();
+  galZoom = Math.max(1, Math.min(5, galZoom - e.deltaY * 0.002));
+  if(galZoom===1){ galPanX=0; galPanY=0; }
+  galApplyTransform();
+},{passive:false});
+
+// Drag to pan when zoomed
+const galWrap = document.getElementById('gal-zoom-wrap');
+document.addEventListener('mousedown', e=>{
+  if(!document.getElementById('gal-modal').classList.contains('open')) return;
+  if(galZoom<=1) return;
+  galIsPanning=true;
+  galPanStart={x:e.clientX-galPanX, y:e.clientY-galPanY};
+  document.getElementById('gal-img').style.cursor='grabbing';
+});
+document.addEventListener('mousemove', e=>{
+  if(!galIsPanning) return;
+  galPanX=e.clientX-galPanStart.x;
+  galPanY=e.clientY-galPanStart.y;
+  galApplyTransform();
+});
+document.addEventListener('mouseup', ()=>{
+  galIsPanning=false;
+  if(galZoom>1) document.getElementById('gal-img').style.cursor='grab';
+});
+
+// Touch pinch zoom
+let galTouchDist=0;
+document.addEventListener('touchstart', e=>{
+  if(!document.getElementById('gal-modal').classList.contains('open')) return;
+  if(e.touches.length===2){
+    galTouchDist=Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    );
+  }
+},{passive:true});
+document.addEventListener('touchmove', e=>{
+  if(!document.getElementById('gal-modal').classList.contains('open')) return;
+  if(e.touches.length===2){
+    const d=Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    );
+    galZoom=Math.max(1,Math.min(5,galZoom*(d/galTouchDist)));
+    galTouchDist=d;
+    if(galZoom===1){galPanX=0;galPanY=0;}
+    galApplyTransform();
+  }
+},{passive:true});
+
+let galModalIdx = 0;
+function openGalleryModal(){
+  openModal('gal-modal');
+  renderGalModal(galModalIdx);
+}
+function renderGalModal(idx){
+  galModalIdx = idx;
+  const p = photos[idx];
+  const img = document.getElementById('gal-img');
+  const ph  = document.getElementById('gal-ph');
+  document.getElementById('gal-cap').textContent = p.caption;
+  if(p.src){
+    img.style.display='none'; ph.style.display='flex';
+    ph.querySelector('span').textContent='Memuat...';
+    img.onload=()=>{ img.style.display='block'; ph.style.display='none'; };
+    img.src=p.src;
+  } else {
+    img.style.display='none'; ph.style.display='flex';
+    ph.querySelector('span').textContent='Foto belum tersedia';
+  }
+}
+function navGal(d){
+  renderGalModal((galModalIdx+d+photos.length)%photos.length);
+}
 
 // ══════════════════════════════════════════════
 //  DOOR MODAL (keep as modal — it's a greeting)
 // ══════════════════════════════════════════════
-function openModal(id){ document.getElementById(id).classList.add('open'); }
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(document.pointerLockElement===canvas) document.exitPointerLock();
+}
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function openDoorModal(){ openModal('door-modal'); }
 
@@ -1140,22 +2118,7 @@ function showSnackToast(){
   },3000);
 }
 
-// Name personalization
-function applyName(){
-  const n=document.getElementById('nameInput').value.trim();
-  if(!n)return;
-  document.getElementById('ban-title').textContent=`Selamat Hari Raya, ${n}! — 1446 H`;
-  document.getElementById('door-title').textContent=`Selamat Datang, ${n}!`;
-  drawTVIdle();
-  sCtx.fillStyle='rgba(201,168,76,0.55)';
-  sCtx.font='italic 12px serif'; sCtx.textAlign='center';
-  sCtx.fillText(`Untuk: ${n}`,256,248);
-  screenTex.needsUpdate=true;
-}
 
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ pauseYT(); closeModal('door-modal'); }
-});
 document.getElementById('door-modal').addEventListener('click',function(e){
   if(e.target===this) closeModal('door-modal');
 });
@@ -1191,7 +2154,36 @@ function animate(){
   // TV screen gentle pulse
   screenM.emissiveIntensity = 0.28+Math.sin(t*0.8)*0.06;
 
-  controls.update();
+  // People idle breathing
+  const breath=Math.sin(t*1.8)*0.012;
+  mTorso.scale.set(1+breath,1+breath,1+breath);
+  wTorso.scale.set(1+breath,1+breath,1+breath);
+
+  // Man greeting wave
+  if(man.userData.isGreeting){
+    mArmR.rotation.z=-2.4+Math.sin(t*14)*0.35;
+    mArmR.rotation.x=0.45;
+  } else {
+    mArmR.rotation.z+=(man.userData.originalArmRot-mArmR.rotation.z)*0.1;
+    mArmR.rotation.x+=(0-mArmR.rotation.x)*0.1;
+  }
+  // Woman greeting bow
+  if(woman.userData.isGreeting){
+    woman.rotation.x=0.18;
+  } else {
+    woman.rotation.x+=(woman.userData.originalRotX-woman.rotation.x)*0.1;
+  }
+  // Speech bubble follows speaker
+  if(activeSpeaker && document.getElementById('speech-bubble').style.opacity==='1'){
+    const p=new THREE.Vector3(); activeSpeaker.getWorldPosition(p);
+    p.y+=1.9; p.project(camera);
+    const bx=(p.x*0.5+0.5)*canvas.clientWidth;
+    const by=(p.y*-0.5+0.5)*canvas.clientHeight;
+    const b=document.getElementById('speech-bubble');
+    b.style.left=bx+'px'; b.style.top=by+'px';
+  }
+
+  fpsTick();
   updateFrameOverlays();
 
   renderer.render(scene,camera);
@@ -1202,7 +2194,6 @@ function animate(){
     document.getElementById('loading').style.opacity='0';
     setTimeout(()=>document.getElementById('loading').style.display='none',600);
     document.getElementById('banner').classList.add('visible');
-    document.getElementById('name-bar').classList.add('visible');
     setTimeout(()=>document.getElementById('hint').classList.add('visible'),2000);
     setTimeout(()=>{
       document.getElementById('hint').classList.remove('visible');
@@ -1221,15 +2212,20 @@ animate();
 //  OBJECT EDITOR (dev mode)
 // ══════════════════════════════════════════
 const editorObjects = {
-    'sofa':         sofaGroup,
-    'coffee table': ctGroup,
-    'tv body':      tvGroup,
-    'tv console':   console_,
-    'photo frame':  frameGroup,
-    'door':         doorGroup,
-    'carpet':       carpetMesh,
-    'lantern':      lanternGroup,
-  };
+  'sofa':         sofaGroup,
+  'coffee table': ctGroup,
+  'tv body':      tvGroup,
+  'tv console':   console_,
+  'photo frame':  frameGroup,
+  'door':         doorGroup,
+  'carpet':       carpetMesh,
+  'lantern':      lanternGroup,
+  'man':          man,
+  'woman':        woman,
+  'desk':         deskGroup,
+  'desk-books':   bookGroup,
+  'desk-mug':     mugGroup,
+};
   
   let edTarget = null;
   let edMode = false;
@@ -1290,6 +2286,114 @@ const editorObjects = {
       setTimeout(() => document.querySelector('#editor button').textContent = '📋 Copy Position Code', 1500);
     });
   }
+
+  function edGetVec(px,py,pz){ 
+    return new THREE.Vector3(
+      parseFloat(document.getElementById(px).value),
+      parseFloat(document.getElementById(py).value),
+      parseFloat(document.getElementById(pz).value)
+    );
+  }
+  function edSetSliders(px,py,pz,v){
+    document.getElementById(px).value=v.x.toFixed(2);
+    document.getElementById(py).value=v.y.toFixed(2);
+    document.getElementById(pz).value=v.z.toFixed(2);
+  }
+  function edUpdatePosVals(){
+    const sp=edGetVec('ed-sx','ed-sy','ed-sz');
+    const st=edGetVec('ed-stx','ed-sty','ed-stz');
+    const ep=edGetVec('ed-ex','ed-ey','ed-ez');
+    const et=edGetVec('ed-etx','ed-ety','ed-etz');
+    document.getElementById('ed-pos-vals').innerHTML=
+      `start pos: (${sp.x.toFixed(1)},${sp.y.toFixed(1)},${sp.z.toFixed(1)})<br>`+
+      `start tgt: (${st.x.toFixed(1)},${st.y.toFixed(1)},${st.z.toFixed(1)})<br>`+
+      `end pos: (${ep.x.toFixed(1)},${ep.y.toFixed(1)},${ep.z.toFixed(1)})<br>`+
+      `end tgt: (${et.x.toFixed(1)},${et.y.toFixed(1)},${et.z.toFixed(1)})`;
+  }
+  function edUpdateStart(){
+    if(!edMode) return;
+    camera.position.copy(edGetVec('ed-sx','ed-sy','ed-sz'));
+    fps.yaw = parseFloat(document.getElementById('ed-stx').value);
+    fpsApply();
+    edUpdatePosVals();
+  }
+  function edPreviewEnd(){
+    if(!edMode) return;
+    camera.position.copy(edGetVec('ed-ex','ed-ey','ed-ez'));
+    fps.yaw = parseFloat(document.getElementById('ed-etx').value);
+    fpsApply();
+    edUpdatePosVals();
+  }
+  function edSnapStart(){
+    edSetSliders('ed-sx','ed-sy','ed-sz', camera.position);
+    document.getElementById('ed-stx').value = fps.yaw.toFixed(2);
+    document.getElementById('ed-sty').value = fps.pitch.toFixed(2);
+    document.getElementById('ed-stz').value = '0';
+    edUpdatePosVals();
+  }
+  function edSnapEnd(){
+    edSetSliders('ed-ex','ed-ey','ed-ez', camera.position);
+    document.getElementById('ed-etx').value = fps.yaw.toFixed(2);
+    document.getElementById('ed-ety').value = fps.pitch.toFixed(2);
+    document.getElementById('ed-etz').value = '0';
+    edUpdatePosVals();
+  }
+  
+  function edTestAnim(){
+    doorsOpen=false;
+    leftPivot.rotation.y=0;
+    rightPivot.rotation.y=0;
+    const startPos = edGetVec('ed-sx','ed-sy','ed-sz');
+    const startTgt = edGetVec('ed-stx','ed-sty','ed-stz');
+    const endPos   = edGetVec('ed-ex','ed-ey','ed-ez');
+    const endTgt   = edGetVec('ed-etx','ed-ety','ed-etz');
+    // Start yaw/pitch from the Tgt X/Y sliders (repurposed as yaw/pitch)
+    fps.yaw   = parseFloat(document.getElementById('ed-stx').value);
+    fps.pitch = parseFloat(document.getElementById('ed-sty').value);
+    camera.position.copy(startPos);
+    fpsApply();
+    animateDoorOpen(()=>{
+      const duration  = parseInt(document.getElementById('ed-dur').value);
+      const easeFn    = easings[document.getElementById('ed-ease').value]||easings.easeInOut;
+      const startT    = performance.now();
+      const startYaw  = fps.yaw;
+      const startPitch= fps.pitch;
+      const endYaw    = parseFloat(document.getElementById('ed-etx').value);
+      const endPitch  = parseFloat(document.getElementById('ed-ety').value);
+      function flyIn(now){
+        const p=Math.min((now-startT)/duration,1);
+        const e=easeFn(p);
+        camera.position.lerpVectors(startPos,endPos,e);
+        fps.yaw   = startYaw   + (endYaw-startYaw)*e;
+        fps.pitch = startPitch + (endPitch-startPitch)*e;
+        fpsApply();
+        if(p<1) requestAnimationFrame(flyIn);
+        else setTimeout(()=>animateDoorClose(),300);
+      }
+      requestAnimationFrame(flyIn);
+    });
+  }
+  
+  function edCopyAnim(){
+    const dur = document.getElementById('ed-dur').value;
+    const ease= document.getElementById('ed-ease').value;
+    const sp  = edGetVec('ed-sx','ed-sy','ed-sz');
+    const st  = edGetVec('ed-stx','ed-sty','ed-stz');
+    const ep  = edGetVec('ed-ex','ed-ey','ed-ez');
+    const et  = edGetVec('ed-etx','ed-ety','ed-etz');
+    const code=
+            `// Paste these into enterRoom() to make permanent
+            const ANIM_DURATION = ${dur};
+            const ANIM_EASE     = '${ease}';
+            const startPos  = new THREE.Vector3(${sp.x.toFixed(2)},${sp.y.toFixed(2)},${sp.z.toFixed(2)});
+            const startTgt  = new THREE.Vector3(${st.x.toFixed(2)},${st.y.toFixed(2)},${st.z.toFixed(2)});
+            const endPos    = new THREE.Vector3(${ep.x.toFixed(2)},${ep.y.toFixed(2)},${ep.z.toFixed(2)});
+            const endTarget = new THREE.Vector3(${et.x.toFixed(2)},${et.y.toFixed(2)},${et.z.toFixed(2)});`;
+    navigator.clipboard.writeText(code).then(()=>{
+      document.querySelectorAll('#editor button')[document.querySelectorAll('#editor button').length-1].textContent='✅ Copied!';
+      setTimeout(()=>edCopyAnim.btn&&(edCopyAnim.btn.textContent='📋 Copy Animation Code'),1500);
+    });
+  }
   
   // Click-to-select in editor mode
   canvas.addEventListener('click', e => {
@@ -1310,19 +2414,207 @@ const editorObjects = {
     }
   }, true); // capture phase so it runs before the modal click handler
   
-  // Toggle with E key
-  document.addEventListener('keydown', e => {
-    if (e.key === 'e' || e.key === 'E') {
-      edMode = !edMode;
-      const panel = document.getElementById('editor');
-      panel.style.display = edMode ? 'flex' : 'none';
-      if (edMode && !edTarget) {
-        edTarget = editorObjects['sofa'];
-        edSelect.value = 'sofa';
-        edLoad();
-      }
+
+  // ══════════════════════════════════════════════
+//  WELCOME MODAL
+// ══════════════════════════════════════════════
+function enterRoom(){
+  const name = document.getElementById('welcome-name').value.trim();
+  if(!name) {
+    // Shake the input if empty
+    const inp = document.getElementById('welcome-name');
+    inp.style.transition='transform .1s';
+    [0,1,2,3].forEach(i=>setTimeout(()=>{
+      inp.style.transform=`translateX(${i%2===0?'-8px':'8px'})`;
+    },i*80));
+    setTimeout(()=>inp.style.transform='',360);
+    return;
+  }
+
+  // Apply name
+  document.getElementById('ban-title').textContent=`Selamat Hari Raya, ${name}! — 1447 H`;
+  document.getElementById('door-title').textContent=`Mau mudik sekarang, ${name}?`;
+  drawTVWithName(name);
+  sCtx.fillStyle='rgba(201,168,76,0.6)';
+  sCtx.font='italic 13px serif'; sCtx.textAlign='center';
+  sCtx.fillText(`Untuk: ${name}`,256,248);
+  screenTex.needsUpdate=true;
+
+  // Start background music on enter
+  const bgm = document.getElementById('bg-music');
+  bgm.volume = 0.35;
+  bgm.addEventListener('ended', playNextTrack);
+  playNextTrack();
+
+  // Fade out modal
+  const modal=document.getElementById('welcome-modal');
+  modal.style.transition='opacity .6s ease';
+  modal.style.opacity='0';
+  setTimeout(()=>{ modal.style.display='none'; }, 600);
+
+  // ── Camera entrance from door ──
+  // Start camera AT the door position, then fly into the room
+  camera.position.set(8.00,1.95,-1.50);
+  fps.yaw   = -1.50;
+  fps.pitch =  0.00;
+  fpsApply();
+
+  // Open doors → fly in → close doors
+  animateDoorOpen(()=>{
+    const startPos  = new THREE.Vector3(8.00,1.95,-1.50);
+    const startTgt  = new THREE.Vector3(-1.50,0.00,0.20);
+    const endPos    = new THREE.Vector3(1.70,1.70,-2.00);
+    const endTarget = new THREE.Vector3(-1.60,0.10,0.00);
+    const duration  = parseInt(document.getElementById('ed-dur')?.value||2800);
+    const easeFn    = easings[document.getElementById('ed-ease')?.value||'easeInOut']||easings.easeInOut;
+    const startT    = performance.now();
+    const startYaw   = fps.yaw;
+    const endYaw    = -1.60;
+    const endPitchFinal = 0.10;
+    const startPitch = fps.pitch;
+    function flyIn(now){
+      const p=Math.min((now-startT)/duration,1);
+      const e=easeFn(p);
+      camera.position.lerpVectors(startPos,endPos,e);
+      fps.yaw   = startYaw   + (endYaw-startYaw)*e;
+      fps.pitch = startPitch + (endPitchFinal-startPitch)*e;
+      fpsApply();
+      if(p<1) requestAnimationFrame(flyIn);
+      else setTimeout(()=>animateDoorClose(),300);
     }
+    requestAnimationFrame(flyIn);
   });
+}
+
+// Auto-focus the input after animation settles
+setTimeout(()=>{
+  document.getElementById('welcome-name').focus();
+}, 1200);
+
+function doorApply(){
+  const px=parseFloat(document.getElementById('dr-px').value);
+  const py=parseFloat(document.getElementById('dr-py').value);
+  const pz=parseFloat(document.getElementById('dr-pz').value);
+  const ry=parseFloat(document.getElementById('dr-ry').value);
+  const sc=parseFloat(document.getElementById('dr-sc').value);
+  doorGroup.position.set(px,py,pz);
+  doorGroup.rotation.y=ry;
+  doorGroup.scale.set(sc,sc,sc);
+  // If doors are open, also update leaf angles
+  if(doorsOpen){
+    leftPivot.rotation.y  = parseFloat(document.getElementById('dr-lo').value);
+    rightPivot.rotation.y = parseFloat(document.getElementById('dr-ro').value);
+  }
+  document.getElementById('dr-vals').innerHTML=
+    `pos:(${px.toFixed(2)},${py.toFixed(2)},${pz.toFixed(2)}) rot:${ry.toFixed(2)} scale:${sc.toFixed(2)}<br>`+
+    `open angles: L=${parseFloat(document.getElementById('dr-lo').value).toFixed(2)} R=${parseFloat(document.getElementById('dr-ro').value).toFixed(2)}`;
+}
+
+let doorTestState=false;
+function doorTestOpen(){
+  const lo=parseFloat(document.getElementById('dr-lo').value);
+  const ro=parseFloat(document.getElementById('dr-ro').value);
+  if(!doorTestState){
+    doorTestState=true; doorsOpen=false;
+    animateDoor(lo,ro,1200,easings.easeOut,()=>{ doorsOpen=true; });
+  } else {
+    doorTestState=false;
+    animateDoorClose();
+  }
+  document.querySelector('#editor button[onclick="doorTestOpen()"]').textContent=
+    doorTestState?'🚪 Test Close':'🚪 Test Open/Close';
+}
+
+function sitApply(){
+  const px  = parseFloat(document.getElementById('sit-px').value);
+  const pz  = parseFloat(document.getElementById('sit-pz').value);
+  const py  = parseFloat(document.getElementById('sit-py').value);
+  const yw  = parseFloat(document.getElementById('sit-yw').value);
+  const pt  = parseFloat(document.getElementById('sit-pt').value);
+  const rd  = parseFloat(document.getElementById('sit-rd').value);
+  // Live update the sit constants
+  SIT_POS.x = px; SIT_POS.z = pz;
+  // Update display
+  document.getElementById('sit-vals').innerHTML=
+    `pos:(${px.toFixed(2)}, ${py.toFixed(2)}, ${pz.toFixed(2)})<br>`+
+    `yaw:${yw.toFixed(2)} pitch:${pt.toFixed(2)} radius:${rd.toFixed(2)}`;
+}
+
+let sitTestState = false;
+function sitTestSit(){
+  const py = parseFloat(document.getElementById('sit-py').value);
+  const yw = parseFloat(document.getElementById('sit-yw').value);
+  const pt = parseFloat(document.getElementById('sit-pt').value);
+  const px = parseFloat(document.getElementById('sit-px').value);
+  const pz = parseFloat(document.getElementById('sit-pz').value);
+  sitTestState = !sitTestState;
+  const targetY     = sitTestState ? py   : STAND_Y;
+  const targetX     = sitTestState ? px   : camera.position.x;
+  const targetZ     = sitTestState ? pz   : camera.position.z;
+  const targetYaw   = sitTestState ? yw   : fps.yaw;
+  const targetPitch = sitTestState ? pt   : 0;
+  isSitting = sitTestState;
+  const startY=camera.position.y, startX=camera.position.x, startZ=camera.position.z;
+  const startYaw=fps.yaw, startPitch=fps.pitch;
+  const duration=600, startT=performance.now();
+  function step(now){
+    const p=Math.min((now-startT)/duration,1);
+    const e=1-Math.pow(1-p,3);
+    camera.position.y=startY+(targetY-startY)*e;
+    camera.position.x=startX+(targetX-startX)*e;
+    camera.position.z=startZ+(targetZ-startZ)*e;
+    fps.yaw  =startYaw  +(targetYaw  -startYaw  )*e;
+    fps.pitch=startPitch+(targetPitch-startPitch)*e;
+    fpsApply();
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  document.querySelector('#editor button[onclick="sitTestSit()"]').textContent=
+    sitTestState ? '🧍 Test Stand' : '🪑 Test Sit/Stand';
+}
+
+function sitCopy(){
+  const px=document.getElementById('sit-px').value;
+  const pz=document.getElementById('sit-pz').value;
+  const py=document.getElementById('sit-py').value;
+  const yw=document.getElementById('sit-yw').value;
+  const pt=document.getElementById('sit-pt').value;
+  const rd=document.getElementById('sit-rd').value;
+  const code=
+`// Paste to replace sit constants
+const SIT_Y     = ${py};
+const SIT_POS   = { x:${px}, z:${pz} };
+const SIT_YAW   = ${yw};
+const SIT_PITCH = ${pt};
+// nearSofa radius: ${rd}  ← update the < value in nearSofa()`;
+  navigator.clipboard.writeText(code).then(()=>{
+    document.querySelector('#editor button[onclick="sitCopy()"]').textContent='✅ Copied!';
+    setTimeout(()=>document.querySelector('#editor button[onclick="sitCopy()"]').textContent='📋 Copy Sit Code',1500);
+  });
+}
+
+function doorCopy(){
+  const px=document.getElementById('dr-px').value;
+  const py=document.getElementById('dr-py').value;
+  const pz=document.getElementById('dr-pz').value;
+  const ry=document.getElementById('dr-ry').value;
+  const sc=document.getElementById('dr-sc').value;
+  const lo=document.getElementById('dr-lo').value;
+  const ro=document.getElementById('dr-ro').value;
+  const code=
+`// Door position — paste to replace existing door position lines
+doorGroup.position.set(${px},${py},${pz});
+doorGroup.rotation.y=${ry};
+doorGroup.scale.set(${sc},${sc},${sc});
+// Door open angles — paste into animateDoor() calls
+// Left leaf target:  ${lo}
+// Right leaf target: ${ro}`;
+  navigator.clipboard.writeText(code).then(()=>{
+    document.querySelector('#editor button[onclick="doorCopy()"]').textContent='✅ Copied!';
+    setTimeout(()=>document.querySelector('#editor button[onclick="doorCopy()"]').textContent='📋 Copy Door Code',1500);
+  });
+}
+
 </script>
 </body>
 </html>
