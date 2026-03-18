@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lebaran Room 3D</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a1f14;font-family:'Cormorant Garamond',Georgia,serif}
+#c{display:block;width:100%;height:100%}
+
+/* HUD overlays */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+
+/* Top banner */
+#banner{
+  position:absolute;top:0;left:0;right:0;
+  text-align:center;padding:14px 20px 10px;
+  background:linear-gradient(to bottom,rgba(10,31,20,0.92),rgba(10,31,20,0));
+  pointer-events:none;
+  opacity:0;transition:opacity 1s ease 1.2s;
+}
+#banner.visible{opacity:1}
+.ban-arabic{font-size:12px;letter-spacing:.18em;color:#E8C96A;text-transform:uppercase;margin-bottom:4px}
+.ban-title{font-family:'Playfair Display',serif;font-size:clamp(18px,3.5vw,30px);font-weight:700;color:#F5E6B8;line-height:1.2}
+.ban-sub{font-style:italic;font-size:13px;color:#A89060;margin-top:2px}
+
+/* Name bar */
+#name-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:12px 20px 16px;
+  background:linear-gradient(to top,rgba(10,31,20,0.92),rgba(10,31,20,0));
+  pointer-events:all;
+  opacity:0;transition:opacity 1s ease 1.5s;
+}
+#name-bar.visible{opacity:1}
+#nameInput{
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.4);
+  border-radius:24px;padding:7px 18px;
+  font-family:'Cormorant Garamond',serif;font-size:15px;color:#F5E6B8;
+  outline:none;width:200px;
+}
+#nameInput::placeholder{color:rgba(201,168,76,.45);font-style:italic}
+#nameBtn{
+  background:linear-gradient(135deg,#C9A84C,#8B6A20);border:none;border-radius:24px;
+  padding:7px 18px;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;
+  color:#0a1f14;cursor:pointer;letter-spacing:.05em;pointer-events:all;
+  transition:opacity .2s;
+}
+#nameBtn:hover{opacity:.85}
+
+/* Hint tooltip */
+#hint{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  font-style:italic;font-size:12px;color:rgba(201,168,76,.5);
+  letter-spacing:.08em;pointer-events:none;
+  opacity:0;transition:opacity .5s;
+  white-space:nowrap;
+}
+#hint.visible{opacity:1}
+
+/* Click label */
+#click-label{
+  position:absolute;
+  background:linear-gradient(135deg,rgba(26,74,48,.95),rgba(13,43,31,.95));
+  border:1px solid rgba(201,168,76,.45);border-radius:8px;
+  padding:6px 14px;font-size:12px;color:#F5E6B8;letter-spacing:.06em;
+  pointer-events:none;opacity:0;transition:opacity .2s;
+  transform:translate(-50%,-100%);
+  white-space:nowrap;
+}
+#click-label.show{opacity:1}
+
+/* ── MODALS ── */
+.modal{
+  display:none;position:fixed;inset:0;
+  background:rgba(10,31,20,.94);z-index:100;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;
+  pointer-events:all;
+}
+.modal.open{display:flex}
+.modal-close{
+  position:fixed;top:16px;right:20px;background:none;border:none;
+  color:#E8C96A;font-size:28px;cursor:pointer;opacity:.7;
+  font-family:serif;pointer-events:all;transition:opacity .2s;
+}
+.modal-close:hover{opacity:1}
+
+/* YouTube */
+#yt-modal .yt-wrap{
+  width:min(800px,90vw);aspect-ratio:16/9;
+  border:1.5px solid rgba(201,168,76,.5);border-radius:10px;overflow:hidden;
+  box-shadow:0 0 80px rgba(0,0,0,.7);
+}
+#yt-modal iframe{width:100%;height:100%;border:none}
+#yt-modal p{font-style:italic;font-size:13px;color:#A89060;letter-spacing:.06em}
+
+/* Gallery */
+#gal-modal .gal-wrap{
+  width:min(540px,86vw);aspect-ratio:4/3;
+  border:1.5px solid rgba(201,168,76,.5);border-radius:10px;overflow:hidden;
+  background:#1A4A30;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 60px rgba(0,0,0,.7);
+}
+#gal-modal img{width:100%;height:100%;object-fit:cover;display:none}
+#gal-modal .ph{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  color:rgba(201,168,76,.45);font-size:14px;text-align:center;padding:20px;
+}
+#gal-modal .cap{font-style:italic;font-size:14px;color:#A89060;letter-spacing:.06em}
+.gal-nav{display:flex;gap:12px}
+.lb-btn{
+  background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.35);
+  color:#E8C96A;font-family:'Cormorant Garamond',serif;
+  font-size:14px;padding:7px 18px;border-radius:20px;cursor:pointer;
+  transition:background .2s;pointer-events:all;
+}
+.lb-btn:hover{background:rgba(201,168,76,.28)}
+
+/* Door */
+#door-modal .msg{
+  text-align:center;padding:40px 36px;
+  background:linear-gradient(160deg,#1A4A30,#0a1f14);
+  border:1.5px solid rgba(201,168,76,.45);border-radius:16px;
+  max-width:380px;box-shadow:0 0 60px rgba(0,0,0,.6);
+}
+#door-modal .ar{font-size:26px;color:#E8C96A;margin-bottom:10px;letter-spacing:.1em}
+#door-modal .dt{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#F5E6B8;margin-bottom:8px}
+#door-modal .ds{font-style:italic;font-size:15px;color:#A89060}
+#door-modal .stars{margin-top:18px;font-size:18px;color:rgba(201,168,76,.6);letter-spacing:.15em}
+
+/* Loading */
+#loading{
+  position:fixed;inset:0;background:#0a1f14;z-index:999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;
+}
+#loading p{font-family:'Playfair Display',serif;font-size:18px;color:#C9A84C;letter-spacing:.1em}
+#loading .dots span{display:inline-block;animation:dot 1.4s infinite;color:#C9A84C;font-size:22px}
+#loading .dots span:nth-child(2){animation-delay:.2s}
+#loading .dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <p>Mempersiapkan Ruangan</p>
+  <div class="dots"><span>✦</span><span>✦</span><span>✦</span></div>
+</div>
+
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="banner">
+    <p class="ban-arabic">عيد مبارك</p>
+    <h1 class="ban-title" id="ban-title">Selamat Hari Raya Idul Fitri 1446 H</h1>
+    <p class="ban-sub">Minal Aidin Wal Faizin — Mohon Maaf Lahir dan Batin</p>
+  </div>
+  <div id="click-label"></div>
+  <div id="hint">Klik objek dalam ruangan untuk berinteraksi</div>
+  <div id="name-bar">
+    <input type="text" id="nameInput" placeholder="Nama Anda…" maxlength="28"
+      onkeydown="if(event.key==='Enter')applyName()"/>
+    <button id="nameBtn" onclick="applyName()">✦ Personalisasi</button>
+  </div>
+</div>
+
+<!-- YouTube overlay — tracks TV in 3D -->
+<div class="modal" id="yt-modal">
+    <button class="modal-close" onclick="pauseYT()">✕</button>
+    <div style="width:min(800px,90vw);aspect-ratio:16/9;border:1.5px solid rgba(201,168,76,.5);border-radius:10px;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.7)">
+      <video id="vid-player" style="width:100%;height:100%;background:#000;display:block"
+        controls playsinline>
+        <source id="vid-src" src="" type="video/mp4"/>
+        Browser tidak mendukung video.
+      </video>
+    </div>
+    <p style="font-style:italic;font-size:13px;color:#A89060;letter-spacing:.06em">Klik ✕ atau tekan Esc untuk menutup</p>
+  </div>
+
+<!-- Photo caption overlay — shows below frame in 3D -->
+<div id="photo-caption" style="position:fixed;display:none;z-index:50;pointer-events:none;
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;
+  color:#F5E6B8;background:rgba(10,31,20,0.82);border:1px solid rgba(201,168,76,.35);
+  border-radius:6px;padding:5px 14px;letter-spacing:.06em;white-space:nowrap;
+  transform:translateX(-50%);transition:opacity .3s">
+</div>
+<!-- Dot indicators for photo frame -->
+<div id="photo-dots" style="position:fixed;display:none;z-index:50;pointer-events:none;
+  transform:translateX(-50%);display:none;gap:6px">
+</div>
+
+<div class="modal" id="door-modal">
+  <button class="modal-close" onclick="closeModal('door-modal')">✕</button>
+  <div class="msg">
+    <div class="ar">أهلاً وسهلاً</div>
+    <div class="dt" id="door-title">Selamat Datang!</div>
+    <div class="ds">Semoga Idul Fitri membawa keberkahan,<br>kedamaian, dan kebahagiaan.</div>
+    <div class="stars">✦ &nbsp; ✦ &nbsp; ✦</div>
+  </div>
+</div>
+
+<div id="editor" style="position:fixed;top:10px;right:10px;z-index:500;font-family:monospace;font-size:12px;display:none;flex-direction:column;gap:6px;background:rgba(0,0,0,0.85);border:1px solid #C9A84C;border-radius:8px;padding:12px;width:260px;color:#F5E6B8">
+    <div style="font-weight:bold;color:#C9A84C;margin-bottom:4px">🛠 Object Editor</div>
+    <select id="ed-select" style="background:#111;color:#F5E6B8;border:1px solid #C9A84C;padding:4px;border-radius:4px"></select>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
+      <span>Pos X</span><input id="ed-px" type="range" min="-8" max="8" step="0.05" oninput="edApply()">
+      <span>Pos Y</span><input id="ed-py" type="range" min="-1" max="6" step="0.05" oninput="edApply()">
+      <span>Pos Z</span><input id="ed-pz" type="range" min="-6" max="6" step="0.05" oninput="edApply()">
+      <span>Rot Y</span><input id="ed-ry" type="range" min="-3.14" max="3.14" step="0.02" oninput="edApply()">
+      <span>Scale</span><input id="ed-sc" type="range" min="0.1" max="3" step="0.05" oninput="edApply()">
+    </div>
+    <div id="ed-vals" style="color:#A89060;font-size:11px;line-height:1.6"></div>
+    <button onclick="edCopy()" style="background:#C9A84C;color:#0a1f14;border:none;border-radius:4px;padding:5px;cursor:pointer;font-weight:bold">📋 Copy Position Code</button>
+    <div style="color:#A89060;font-size:10px;margin-top:2px">Press <b style="color:#F5E6B8">E</b> to toggle · Click object to select</div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// ══════════════════════════════════════════════
+//  CUSTOMIZE HERE
+// ══════════════════════════════════════════════
+const VIDEO_SRC = 'https://drive.google.com/uc?export=download&id=1RpLWg41-1y86zmQ3FCVvH21bMsylbJAl';
+const photos = [
+  { src:'', caption:'Tim Marketing – Lebaran 1446H' },
+  { src:'', caption:'Tim Teknologi – Lebaran 1446H' },
+  { src:'', caption:'Tim Operasional – Lebaran 1446H' },
+  { src:'', caption:'Tim Keuangan – Lebaran 1446H' },
+  { src:'', caption:'All Hands – Lebaran 1446H' },
+  { src:'', caption:'Halal Bihalal 1446H' },
+];
+
+// ══════════════════════════════════════════════
+//  SCENE SETUP
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a1f14);
+scene.fog = new THREE.FogExp2(0x0a1f14, 0.045);
+
+// Camera — fixed corner-view angle
+const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+camera.position.set(5.5, 4.2, 6.5);
+camera.lookAt(0, 0.8, 0);
+
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.target.set(0, 0.8, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 3;
+controls.maxDistance = 14;
+controls.maxPolarAngle = Math.PI / 2.1; // prevent going below floor
+controls.update();
+
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(canvas);
+resize();
+
+// ── COLORS ──
+const C = {
+  wallL:  0x1E5535,
+  wallR:  0x174A2D,
+  floor:  0x8B6A3A,
+  ceiling:0x0F2E1E,
+  gold:   0xC9A84C,
+  goldL:  0xE8C96A,
+  woodD:  0x3A2010,
+  woodM:  0x5C3A1A,
+  fabricG:0x1A4A30,
+  carpetR:0x6B1818,
+  doorW:  0x5C3A1A,
+  tvB:    0x111111,
+  cream:  0xFBF6EC,
+};
+
+// ── HELPERS ──
+function box(w,h,d,color,rough=0.8,metal=0.1){
+  const g = new THREE.BoxGeometry(w,h,d);
+  const m = new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+  const mesh = new THREE.Mesh(g,m);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+function plane(w,d,color,rough=0.9){
+  const g = new THREE.PlaneGeometry(w,d);
+  const m = new THREE.MeshStandardMaterial({color,roughness:rough,side:THREE.FrontSide});
+  const mesh = new THREE.Mesh(g,m);
+  mesh.receiveShadow=true;
+  return mesh;
+}
+
+// ══════════════════════════════════════════════
+//  ROOM SHELL
+// ══════════════════════════════════════════════
+const roomW=10, roomH=5, roomD=9;
+
+// Floor
+const flr = plane(roomW,roomD,C.floor,0.95);
+flr.rotation.x=-Math.PI/2; flr.position.y=0;
+scene.add(flr);
+
+// Ceiling
+const ceil = plane(roomW,roomD,C.ceiling,1);
+ceil.rotation.x=Math.PI/2; ceil.position.y=roomH;
+scene.add(ceil);
+
+// Back wall (Z negative)
+const bwall = plane(roomW,roomH,C.wallL,0.9);
+bwall.position.set(0,roomH/2,-roomD/2);
+scene.add(bwall);
+
+// Left wall
+const lwall = plane(roomD,roomH,C.wallL,0.9);
+lwall.rotation.y=Math.PI/2;
+lwall.position.set(-roomW/2,roomH/2,0);
+scene.add(lwall);
+
+// Right wall
+const rwall = plane(roomD,roomH,C.wallR,0.9);
+rwall.rotation.y=-Math.PI/2;
+rwall.position.set(roomW/2,roomH/2,0);
+scene.add(rwall);
+
+// ── GEOMETRIC WALLPAPER PATTERN (canvas texture) ──
+function makeWallTexture(col1, col2, size=256){
+  const cv = document.createElement('canvas');
+  cv.width=cv.height=size;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=col1; ctx.fillRect(0,0,size,size);
+  ctx.strokeStyle=col2; ctx.lineWidth=0.8; ctx.globalAlpha=0.18;
+  const s=32;
+  for(let x=0;x<size;x+=s){
+    for(let y=0;y<size;y+=s){
+      ctx.beginPath();
+      ctx.moveTo(x+s/2,y); ctx.lineTo(x+s,y+s/2);
+      ctx.lineTo(x+s/2,y+s); ctx.lineTo(x,y+s/2);
+      ctx.closePath(); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=0.08;
+  for(let x=0;x<size;x+=s){
+    for(let y=0;y<size;y+=s){
+      ctx.beginPath(); ctx.arc(x+s/2,y+s/2,4,0,Math.PI*2); ctx.stroke();
+    }
+  }
+  const t=new THREE.CanvasTexture(cv);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(4,3);
+  return t;
+}
+
+const wallTex = makeWallTexture('#1E5535','#C9A84C');
+[bwall,lwall,rwall].forEach(w=>{ w.material.map=wallTex; w.material.needsUpdate=true; });
+
+// ── GOLD SKIRTING / TRIM LINES ──
+function goldTrim(pts, yw){
+  const curve = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
+  const g = new THREE.TubeGeometry(curve,pts.length*4,0.012,6,false);
+  const m = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.3,metalness:0.8});
+  return new THREE.Mesh(g,m);
+}
+// Floor trim back
+scene.add(goldTrim([[-roomW/2,0.01,-roomD/2],[roomW/2,0.01,-roomD/2]]));
+// Ceiling trim back
+scene.add(goldTrim([[-roomW/2,roomH,-roomD/2],[roomW/2,roomH,-roomD/2]]));
+// Floor trim left
+scene.add(goldTrim([[-roomW/2,0.01,-roomD/2],[-roomW/2,0.01,roomD/2]]));
+// Ceiling trim left
+scene.add(goldTrim([[-roomW/2,roomH,-roomD/2],[-roomW/2,roomH,roomD/2]]));
+
+// ══════════════════════════════════════════════
+//  LIGHTING
+// ══════════════════════════════════════════════
+
+// Ambient — warm dim
+const ambL = new THREE.AmbientLight(0xFFE4B0, 0.35);
+scene.add(ambL);
+
+// Main warm ceiling light
+const ceilL = new THREE.PointLight(0xFFCC66, 1.8, 18);
+ceilL.position.set(0,4.5,0);
+ceilL.castShadow=true;
+ceilL.shadow.mapSize.set(1024,1024);
+ceilL.shadow.radius=4;
+scene.add(ceilL);
+
+// TV blue-ish fill light
+const tvL = new THREE.PointLight(0x4488BB, 0.6, 6);
+tvL.position.set(-3.5, 2, -2);
+scene.add(tvL);
+
+// Door warm light (right wall)
+const doorL = new THREE.PointLight(0xFFAA44, 0.5, 5);
+doorL.position.set(3.5, 2.5, -1.5);
+scene.add(doorL);
+
+// Candle flicker light
+const candleL = new THREE.PointLight(0xFF8833, 0.7, 3.5);
+candleL.position.set(0.0, 1.4, -1.95);
+scene.add(candleL);
+
+// ══════════════════════════════════════════════
+//  HANGING LANTERN (ceiling center)
+// ══════════════════════════════════════════════
+const lanternGroup = new THREE.Group();
+
+// String
+const strG = new THREE.CylinderGeometry(0.006,0.006,0.8,6);
+const strM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.3,metalness:0.6});
+const str = new THREE.Mesh(strG,strM);
+str.position.y=4.6; lanternGroup.add(str);
+
+// Lantern body
+function lanternBody(){
+  const g = new THREE.Group();
+  const body = box(0.28,0.4,0.28,C.gold,0.3,0.7);
+  const capM = new THREE.MeshStandardMaterial({color:C.goldL,roughness:0.2,metalness:0.8});
+  const capG = new THREE.CylinderGeometry(0.18,0.14,0.06,8);
+  const capT = new THREE.Mesh(capG,capM); capT.position.y=0.23;
+  const capB = new THREE.Mesh(capG,capM); capB.position.y=-0.23;
+  // Glow glass
+  const glassG = new THREE.BoxGeometry(0.22,0.34,0.22);
+  const glassM = new THREE.MeshStandardMaterial({color:0xFFEE88,emissive:0xFFCC44,emissiveIntensity:1.2,transparent:true,opacity:0.35,roughness:0,metalness:0});
+  const glass = new THREE.Mesh(glassG,glassM);
+  g.add(body,capT,capB,glass);
+  return g;
+}
+const lb = lanternBody();
+lb.position.y=4.15;
+lanternGroup.add(lb);
+
+// Tassel
+const tasG = new THREE.CylinderGeometry(0.015,0.005,0.25,6);
+const tasM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.5});
+const tas = new THREE.Mesh(tasG,tasM); tas.position.y=3.82;
+lanternGroup.add(tas);
+
+lanternGroup.position.set(0.00,-1.00,-1.80);
+lanternGroup.rotation.y=-1.34;
+lanternGroup.scale.set(1.20,1.20,1.20);
+scene.add(lanternGroup);
+
+// ══════════════════════════════════════════════
+//  TV CONSOLE + TV  (back-left wall)
+// ══════════════════════════════════════════════
+
+// Console
+const console_ = new THREE.Group();
+const cBase = box(2.0,0.45,0.55,C.woodD,0.9,0.05);
+cBase.position.set(0,0.225,0);
+// Console legs
+[-0.8,0.8].forEach(x=>{
+  const leg = box(0.08,0.22,0.08,C.woodM,0.9);
+  leg.position.set(x,-0.115,0); cBase.add(leg);
+});
+// Gold trim strip on console
+const trimG = new THREE.BoxGeometry(2.05,0.03,0.02);
+const trimM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.8});
+const trim = new THREE.Mesh(trimG,trimM); trim.position.set(0,0.235,0.285);
+cBase.add(trim);
+console_.add(cBase);
+console_.position.set(0.05,0.00,-4.05);
+console_.rotation.y=-0.02;
+console_.scale.set(1.40,1.40,1.40);
+scene.add(console_);
+
+// TV Body
+const tvGroup = new THREE.Group();
+
+// TV back panel
+const tvBack = box(1.9,1.1,0.12,C.tvB,0.95,0.1);
+tvBack.position.y=0.06;
+
+// Bezel
+const bezelM = new THREE.MeshStandardMaterial({color:0x1A1A1A,roughness:0.8});
+const bezelG = new THREE.BoxGeometry(1.94,1.14,0.06);
+const bezel = new THREE.Mesh(bezelG,bezelM); bezel.position.z=0.03;
+
+// Gold bezel edge
+const bEdgeG = new THREE.BoxGeometry(1.96,1.16,0.02);
+const bEdgeM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.9});
+const bEdge = new THREE.Mesh(bEdgeG,bEdgeM); bEdge.position.z=0.02;
+
+// ── TV SCREEN (canvas texture with play button) ──
+const screenCV = document.createElement('canvas');
+screenCV.width=512; screenCV.height=288;
+const sCtx = screenCV.getContext('2d');
+
+function drawTVIdle(){
+  // Background gradient
+  const grad = sCtx.createRadialGradient(256,144,10,256,144,260);
+  grad.addColorStop(0,'#1A6B9A'); grad.addColorStop(1,'#061620');
+  sCtx.fillStyle=grad; sCtx.fillRect(0,0,512,288);
+  // Scanlines
+  sCtx.strokeStyle='rgba(0,0,0,0.15)'; sCtx.lineWidth=1;
+  for(let y=0;y<288;y+=3){ sCtx.beginPath();sCtx.moveTo(0,y);sCtx.lineTo(512,y);sCtx.stroke(); }
+  // Play circle
+  sCtx.strokeStyle='rgba(201,168,76,0.85)'; sCtx.lineWidth=3;
+  sCtx.beginPath(); sCtx.arc(256,130,38,0,Math.PI*2); sCtx.stroke();
+  sCtx.fillStyle='rgba(201,168,76,0.85)';
+  sCtx.beginPath(); sCtx.moveTo(244,112); sCtx.lineTo(244,148); sCtx.lineTo(278,130); sCtx.closePath(); sCtx.fill();
+  // Text
+  sCtx.fillStyle='rgba(201,168,76,0.7)';
+  sCtx.font='bold 15px serif'; sCtx.textAlign='center';
+  sCtx.fillText('Klik untuk memutar video',256,196);
+  sCtx.font='italic 13px serif'; sCtx.fillStyle='rgba(201,168,76,0.45)';
+  sCtx.fillText('Lebaran 1446 H',256,220);
+}
+drawTVIdle();
+const screenTex = new THREE.CanvasTexture(screenCV);
+const screenG = new THREE.PlaneGeometry(1.76,0.99);
+const screenM = new THREE.MeshStandardMaterial({
+  map:screenTex, emissive:0x2244AA, emissiveIntensity:0.3,
+  roughness:0.1, metalness:0
+});
+const screen = new THREE.Mesh(screenG,screenM);
+screen.position.z=0.073; screen.name='tv';
+
+tvGroup.add(tvBack,bezel,bEdge,screen);
+tvGroup.position.set(0.05,2.35,-4.45);
+tvGroup.rotation.y=-0.02;
+tvGroup.scale.set(2.00,2.00,2.00);
+scene.add(tvGroup);
+
+// ══════════════════════════════════════════════
+//  PHOTO FRAME (back wall, center-left)
+// ══════════════════════════════════════════════
+const frameGroup = new THREE.Group();
+
+// Gold frame moulding (4 bars)
+const fW=1.3,fH=0.95,fT=0.06,fD=0.04;
+const frameM_ = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.25,metalness:0.75});
+
+[[0,fH/2+fT/2,0, fW+fT*2,fT,fD],   // top
+ [0,-fH/2-fT/2,0, fW+fT*2,fT,fD],  // bottom
+ [-fW/2-fT/2,0,0, fT,fH,fD],        // left
+ [fW/2+fT/2,0,0,  fT,fH,fD]         // right
+].forEach(([x,y,z,w,h,d])=>{
+  const fb = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),frameM_);
+  fb.position.set(x,y,z); frameGroup.add(fb);
+});
+
+// Photo canvas
+const photoCV = document.createElement('canvas');
+photoCV.width=520; photoCV.height=380;
+const pCtx = photoCV.getContext('2d');
+function drawPhotoPlaceholder(){
+  const g = pCtx.createLinearGradient(0,0,0,380);
+  g.addColorStop(0,'#1E5535'); g.addColorStop(1,'#0D2B1F');
+  pCtx.fillStyle=g; pCtx.fillRect(0,0,520,380);
+  pCtx.strokeStyle='rgba(201,168,76,0.4)'; pCtx.lineWidth=2;
+  pCtx.strokeRect(12,12,496,356);
+  pCtx.fillStyle='rgba(201,168,76,0.55)';
+  pCtx.font='bold 22px serif'; pCtx.textAlign='center';
+  pCtx.fillText('Foto Tim Kami',260,160);
+  pCtx.font='italic 16px serif'; pCtx.fillStyle='rgba(201,168,76,0.35)';
+  pCtx.fillText('Klik untuk membuka galeri',260,195);
+  pCtx.fillStyle='rgba(201,168,76,0.3)';
+  pCtx.font='20px serif'; pCtx.fillText('✦  ✦  ✦',260,230);
+}
+drawPhotoPlaceholder();
+const photoTex = new THREE.CanvasTexture(photoCV);
+const photoG = new THREE.PlaneGeometry(fW,fH);
+const photoM_ = new THREE.MeshStandardMaterial({map:photoTex,roughness:0.6});
+const photoMesh = new THREE.Mesh(photoG,photoM_);
+photoMesh.name='frame';
+frameGroup.add(photoMesh);
+
+// Hanging wire
+const wireM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.3,metalness:0.7});
+[-0.4,0.4].forEach(x=>{
+  const wG = new THREE.CylinderGeometry(0.006,0.006,0.35,4);
+  const w_ = new THREE.Mesh(wG,wireM);
+  w_.position.set(x,fH/2+0.18,0); w_.rotation.z=x>0?-0.3:0.3;
+  frameGroup.add(w_);
+});
+
+frameGroup.position.set(-4.95,2.70,-1.05);
+frameGroup.rotation.y=1.58;
+frameGroup.scale.set(3.00,3.00,3.00);
+scene.add(frameGroup);
+
+// ══════════════════════════════════════════════
+//  DOOR (right wall)
+// ══════════════════════════════════════════════
+const doorGroup = new THREE.Group();
+
+// Door frame
+const dfM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.25,metalness:0.75});
+[[0,1.6,0, 0.12,3.2,0.1],  // left jamb
+ [1.12,1.6,0, 0.12,3.2,0.1], // right jamb
+ [0.56,3.24,0, 1.34,0.12,0.1] // top
+].forEach(([x,y,z,w,h,d])=>{
+  const fm = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),dfM);
+  fm.position.set(x,y,z); doorGroup.add(fm);
+});
+
+// Door panel
+const doorM_ = new THREE.MeshStandardMaterial({color:C.doorW,roughness:0.7,metalness:0.05});
+const doorPanel = box(1.0,3.0,0.08,C.doorW,0.7,0.05);
+doorPanel.position.set(0.56,1.5,0.02);
+
+// Door panels inset (decorative recesses)
+const insetM = new THREE.MeshStandardMaterial({color:0x4A2E12,roughness:0.8});
+[[0.56,2.2,0.06, 0.7,0.9,0.04],
+ [0.56,1.0,0.06, 0.7,0.9,0.04]].forEach(([x,y,z,w,h,d])=>{
+  const ip = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),insetM);
+  ip.position.set(x,y,z); doorGroup.add(ip);
+});
+
+// Gold door knob
+const knobM = new THREE.MeshStandardMaterial({color:C.goldL,roughness:0.1,metalness:0.9});
+const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8),knobM);
+knob.position.set(0.16,1.55,0.1);
+
+// Islamic arch above door (decorative)
+const archCV = document.createElement('canvas');
+archCV.width=200; archCV.height=120;
+const aCtx=archCV.getContext('2d');
+aCtx.clearRect(0,0,200,120);
+aCtx.strokeStyle='rgba(201,168,76,0.7)'; aCtx.lineWidth=2;
+aCtx.beginPath(); aCtx.arc(100,120,90,Math.PI,0); aCtx.stroke();
+aCtx.beginPath(); aCtx.arc(100,120,70,Math.PI,0); aCtx.stroke();
+aCtx.fillStyle='rgba(201,168,76,0.5)'; aCtx.font='bold 28px serif';
+aCtx.textAlign='center'; aCtx.fillText('✦',100,80);
+const archTex = new THREE.CanvasTexture(archCV);
+const archMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.95,0.55),
+  new THREE.MeshStandardMaterial({map:archTex,transparent:true,roughness:0.8})
+);
+archMesh.position.set(0.56,3.05,0.06);
+
+doorGroup.add(doorPanel,knob,archMesh);
+doorGroup.name='door';
+doorPanel.name='door'; knob.name='door';
+
+// Rotate whole door group to face right wall
+doorGroup.rotation.y=-1.58;
+doorGroup.position.set(4.95,0.00,-2.80);
+doorGroup.scale.set(1.25,1.25,1.25);
+scene.add(doorGroup);
+
+// ══════════════════════════════════════════════
+//  SOFA (left area, facing TV)
+// ══════════════════════════════════════════════
+const sofaGroup = new THREE.Group();
+const fabricM = new THREE.MeshStandardMaterial({color:C.fabricG,roughness:0.95,metalness:0});
+const fabricDkM = new THREE.MeshStandardMaterial({color:0x153D27,roughness:0.95});
+
+// Seat base
+const seat = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.28,0.9),fabricM); seat.position.y=0.4;
+// Back rest
+const back = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.7,0.2),fabricM); back.position.set(0,0.73,-0.35);
+// Armrests
+const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.52,0.9),fabricDkM); armL.position.set(-1.2,0.52,0);
+const armR = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.52,0.9),fabricDkM); armR.position.set(1.2,0.52,0);
+// Seat cushions
+const cushM = new THREE.MeshStandardMaterial({color:0x245C38,roughness:0.9});
+[-0.55,0.55].forEach(x=>{
+  const c = new THREE.Mesh(new THREE.BoxGeometry(0.95,0.12,0.78),cushM);
+  c.position.set(x,0.56,0.02); sofaGroup.add(c);
+});
+// Decorative pillow
+const pilM = new THREE.MeshStandardMaterial({color:0x8B2020,roughness:0.9});
+const pil = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.28,0.1),pilM);
+pil.position.set(-0.95,0.75,-0.28); pil.rotation.z=0.15;
+sofaGroup.add(seat,back,armL,armR,pil);
+sofaGroup.position.set(0.05,-0.35,0.05);
+sofaGroup.rotation.y=-3.14;
+sofaGroup.scale.set(1.40,1.40,1.40);
+[seat,back,armL,armR].forEach(m=>{ m.castShadow=true; m.receiveShadow=true; });
+scene.add(sofaGroup);
+
+// ══════════════════════════════════════════════
+//  CARPET
+// ══════════════════════════════════════════════
+const carpetCV = document.createElement('canvas');
+carpetCV.width=512; carpetCV.height=512;
+const cpCtx=carpetCV.getContext('2d');
+const cg=cpCtx.createRadialGradient(256,256,20,256,256,256);
+cg.addColorStop(0,'#8B2020'); cg.addColorStop(0.6,'#6B1818'); cg.addColorStop(1,'#4A0E0E');
+cpCtx.fillStyle=cg; cpCtx.fillRect(0,0,512,512);
+// Border
+cpCtx.strokeStyle='rgba(201,168,76,0.6)'; cpCtx.lineWidth=8;
+cpCtx.strokeRect(12,12,488,488);
+cpCtx.strokeStyle='rgba(201,168,76,0.35)'; cpCtx.lineWidth=3;
+cpCtx.strokeRect(24,24,464,464);
+// Center medallion
+cpCtx.strokeStyle='rgba(201,168,76,0.45)'; cpCtx.lineWidth=2;
+cpCtx.beginPath(); cpCtx.arc(256,256,80,0,Math.PI*2); cpCtx.stroke();
+cpCtx.beginPath(); cpCtx.arc(256,256,50,0,Math.PI*2); cpCtx.stroke();
+cpCtx.fillStyle='rgba(201,168,76,0.4)'; cpCtx.font='bold 48px serif';
+cpCtx.textAlign='center'; cpCtx.fillText('✦',256,272);
+// Corner stars
+[[56,56],[456,56],[56,456],[456,456]].forEach(([x,y])=>{
+  cpCtx.fillStyle='rgba(201,168,76,0.35)'; cpCtx.font='20px serif';
+  cpCtx.fillText('✦',x,y+6);
+});
+const carpetTex = new THREE.CanvasTexture(carpetCV);
+const carpetMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.8,2.6),
+  new THREE.MeshStandardMaterial({map:carpetTex,roughness:0.95})
+);
+carpetMesh.rotation.x=-Math.PI/2;
+carpetMesh.position.set(0.05,0.05,-1.95);
+scene.add(carpetMesh);
+
+// ══════════════════════════════════════════════
+//  COFFEE TABLE
+// ══════════════════════════════════════════════
+const ctGroup = new THREE.Group();
+// Glass top — wider on X
+const ctTopM = new THREE.MeshStandardMaterial({
+    color:0xaaddff, roughness:0, metalness:0.1,
+    transparent:true, opacity:0.25,
+    envMapIntensity:1.5
+  });
+  const ctTop = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.05,0.65),ctTopM);
+  ctTop.position.y=0.55;
+  // Glass edge highlight
+  const ctEdge = new THREE.Mesh(
+    new THREE.BoxGeometry(2.22,0.015,0.67),
+    new THREE.MeshStandardMaterial({color:0xffffff,roughness:0,metalness:0.3,transparent:true,opacity:0.4})
+  );
+  ctEdge.position.y=0.558;
+  // Gold metal legs — thin and elegant
+  const legM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.9});
+  [[-0.95,0.27,-0.27],[0.95,0.27,-0.27],[-0.95,0.27,0.27],[0.95,0.27,0.27]].forEach(([x,y,z])=>{
+    const l=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.55,8),legM);
+    l.position.set(x,y,z); ctGroup.add(l);
+  });
+ctGroup.add(ctTop,ctEdge);
+ctGroup.position.set(-0.05, 0.00, -1.95);
+ctGroup.scale.set(0.95, 0.95, 0.95);
+
+ctGroup.name='table';
+ctTop.name='table';
+[ctTop].forEach(m=>{m.castShadow=true;m.receiveShadow=true});
+scene.add(ctGroup);
+
+// ── CANDLES (pair, elegant tall) ──
+const candleBodyM = new THREE.MeshStandardMaterial({color:C.cream,roughness:0.5,metalness:0});
+const flameM = new THREE.MeshStandardMaterial({color:0xFFEE88,emissive:0xFFAA00,emissiveIntensity:2.5,roughness:0.2});
+const candleHolderM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.9});
+
+[[-0.3, 0.32, 0.0], [0.3, 0.28, 0.0]].forEach(([x,h,z])=>{
+  // Holder base (small disc)
+  const holder = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.07,0.03,12), candleHolderM);
+  holder.position.set(x, 0.578, -1.95+z);
+  // Candle body (tall, thin)
+  const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,h,10), candleBodyM);
+  cb.position.set(x, 0.578+h/2+0.015, -1.95+z);
+  // Wick
+  const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.003,0.003,0.04,4),
+    new THREE.MeshStandardMaterial({color:0x222222}));
+  wick.position.set(x, 0.578+h+0.015, -1.95+z);
+  // Flame
+  const fl = new THREE.Mesh(new THREE.SphereGeometry(0.022,8,6), flameM);
+  fl.scale.set(1,1.6,1);
+  fl.position.set(x, 0.578+h+0.05, -1.95+z);
+  // Wax drip ring
+  const drip = new THREE.Mesh(new THREE.TorusGeometry(0.028,0.008,6,12),
+    new THREE.MeshStandardMaterial({color:0xF0EAD6,roughness:0.6}));
+  drip.rotation.x = Math.PI/2;
+  drip.position.set(x, 0.578+h*0.7, -1.95+z);
+  scene.add(holder, cb, wick, fl, drip);
+});
+
+// ── VASE WITH FLOWERS ──
+const vaseM = new THREE.MeshStandardMaterial({color:0x1A3A2A,roughness:0.3,metalness:0.4});
+const vaseGoldM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.2,metalness:0.8});
+
+// Vase body (lathe-like using scaled cylinders stacked)
+const vaseBase  = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.07,0.05,14), vaseM);
+const vaseMid   = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.18,14), vaseM);
+const vaseNeck  = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.07,0.1,14),  vaseM);
+const vaseMouth = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.04,0.04,14), vaseM);
+// Gold rim
+const vaseRim   = new THREE.Mesh(new THREE.TorusGeometry(0.06,0.008,6,14), vaseGoldM);
+const vaseBand  = new THREE.Mesh(new THREE.CylinderGeometry(0.072,0.072,0.025,14),
+  new THREE.MeshStandardMaterial({color:C.goldL,roughness:0.2,metalness:0.85}));
+
+const VX = 0.0, VZ = -1.95, VY = 0.578;
+vaseBase.position.set(VX, VY+0.025,      VZ);
+vaseMid.position.set( VX, VY+0.05+0.09,  VZ);
+vaseNeck.position.set(VX, VY+0.05+0.18+0.05, VZ);
+vaseMouth.position.set(VX,VY+0.05+0.18+0.1+0.02,VZ);
+vaseRim.rotation.x = Math.PI/2;
+vaseRim.position.set(VX, VY+0.05+0.18+0.1+0.04, VZ);
+vaseBand.position.set(VX, VY+0.05+0.06, VZ);
+scene.add(vaseBase,vaseMid,vaseNeck,vaseMouth,vaseRim,vaseBand);
+
+// Stems
+const stemM = new THREE.MeshStandardMaterial({color:0x2D5A27,roughness:0.9});
+const petalColors = [0xE8A0B0, 0xF5C0A0, 0xFFE0A0, 0xD4A0D4, 0xF0A0A0];
+const stemTop = VY+0.05+0.18+0.1+0.04;
+
+[[-0.04,0.38,-0.03],[-0.01,0.42,0.02],[0.04,0.36,0.01],[-0.03,0.40,0.04],[0.02,0.44,-0.02]].forEach(([sx,sh,sz],i)=>{
+  // Stem
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,sh,5), stemM);
+  stem.position.set(VX+sx, stemTop+sh/2, VZ+sz);
+  stem.rotation.z = sx*1.5;
+  stem.rotation.x = sz*1.5;
+  scene.add(stem);
+  // Flower head (sphere cluster)
+  const flowerM = new THREE.MeshStandardMaterial({
+    color:petalColors[i], roughness:0.8,
+    emissive:petalColors[i], emissiveIntensity:0.08
+  });
+  const centerM = new THREE.MeshStandardMaterial({color:0xFFEE44,roughness:0.6,emissive:0xFFCC00,emissiveIntensity:0.3});
+  const flowerTop = new THREE.Vector3(VX+sx+Math.sin(sx*1.5)*sh*0.15, stemTop+sh, VZ+sz+Math.sin(sz*1.5)*sh*0.15);
+  // Petals
+  for(let p=0;p<6;p++){
+    const angle = (p/6)*Math.PI*2;
+    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.028,6,5), flowerM);
+    petal.position.set(flowerTop.x+Math.cos(angle)*0.032, flowerTop.y, flowerTop.z+Math.sin(angle)*0.032);
+    scene.add(petal);
+  }
+  // Center
+  const center = new THREE.Mesh(new THREE.SphereGeometry(0.022,7,6), centerM);
+  center.position.copy(flowerTop);
+  scene.add(center);
+});
+
+// Small leaf
+const leafM = new THREE.MeshStandardMaterial({color:0x2D6A27,roughness:0.9,side:THREE.DoubleSide});
+const leafG = new THREE.SphereGeometry(0.04,6,4);
+const leaf = new THREE.Mesh(leafG,leafM);
+leaf.scale.set(1,0.2,0.5);
+leaf.position.set(VX+0.06, stemTop+0.1, VZ-0.02);
+leaf.rotation.z=-0.5;
+scene.add(leaf);
+
+// ══════════════════════════════════════════════
+//  KETUPAT GARLAND (ceiling)
+// ══════════════════════════════════════════════
+const stringM = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.4,metalness:0.5});
+const ketGold = new THREE.MeshStandardMaterial({color:C.gold,roughness:0.35,metalness:0.4});
+const ketGold2 = new THREE.MeshStandardMaterial({color:0xB89038,roughness:0.4,metalness:0.3});
+
+// String across back wall
+const garlandCurve = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-4.8,4.8,-4.4),
+  new THREE.Vector3(-2.4,4.4,-4.4),
+  new THREE.Vector3(0,4.6,-4.4),
+  new THREE.Vector3(2.4,4.4,-4.4),
+  new THREE.Vector3(4.8,4.8,-4.4),
+]);
+const garlandG = new THREE.TubeGeometry(garlandCurve,40,0.01,5,false);
+scene.add(new THREE.Mesh(garlandG,stringM));
+
+// Ketupat diamonds along garland
+[-3.5,-1.8,0,1.8,3.5].forEach((x,i)=>{
+  const kg = new THREE.Group();
+  const kDiamond = new THREE.Mesh(new THREE.OctahedronGeometry(0.14,0), i%2===0?ketGold:ketGold2);
+  kDiamond.rotation.y=Math.PI/4;
+  // String drop
+  const kStrG = new THREE.CylinderGeometry(0.006,0.006,0.22,4);
+  const kStr = new THREE.Mesh(kStrG,stringM);
+  kStr.position.y=0.11+0.14;
+  // Tassel
+  const kTasG = new THREE.ConeGeometry(0.02,0.1,6);
+  const kTas = new THREE.Mesh(kTasG,ketGold);
+  kTas.position.y=-0.14-0.05; kTas.rotation.z=Math.PI;
+  kg.add(kStr,kDiamond,kTas);
+  const yPos = i===2 ? 4.25 : 4.18;
+  kg.position.set(x, yPos, -4.4);
+  kg.userData.swayOffset = i*0.7;
+  kg.userData.isKetupat = true;
+  scene.add(kg);
+});
+
+// ══════════════════════════════════════════════
+//  RAYCASTING — CLICK DETECTION
+// ══════════════════════════════════════════════
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const clickLabel = document.getElementById('click-label');
+
+const interactable = {
+    tv:    { label:'▶ Putar Video Lebaran', action: ()=>toggleYT() },
+    frame: { label:'🖼 Foto Berikutnya →',  action: ()=>nextPhoto() },
+    door:  { label:'🚪 Buka Pintu',         action: ()=>openDoorModal() },
+    table: { label:'✦ Lihat Sajian Lebaran', action: ()=>showSnackToast() },
+  };
+
+function getIntersect(e){
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  return raycaster.intersectObjects(scene.children,true);
+}
+
+canvas.addEventListener('mousemove', e=>{
+  const hits = getIntersect(e);
+  let found = null;
+  for(const h of hits){
+    const name = h.object.name || (h.object.parent&&h.object.parent.name) || (h.object.parent?.parent?.name);
+    if(interactable[name]){ found={name,hit:h}; break; }
+  }
+  if(found){
+    canvas.style.cursor='pointer';
+    clickLabel.textContent = interactable[found.name].label;
+    clickLabel.style.left = (e.clientX)+'px';
+    clickLabel.style.top  = (e.clientY-12)+'px';
+    clickLabel.classList.add('show');
+  } else {
+    canvas.style.cursor='default';
+    clickLabel.classList.remove('show');
+  }
+});
+
+canvas.addEventListener('click', e=>{
+  const hits = getIntersect(e);
+  for(const h of hits){
+    const name = h.object.name || (h.object.parent&&h.object.parent.name) || (h.object.parent?.parent?.name);
+    if(interactable[name]){ interactable[name].action(); return; }
+  }
+});
+
+// ══════════════════════════════════════════════
+//  TV YOUTUBE OVERLAY — tracks TV mesh in 3D
+// ══════════════════════════════════════════════
+const vidPlayer = document.getElementById('vid-player');
+let ytPlaying = false;
+
+// 3D corner points of the TV screen face (local space, z=0.074)
+const tvScreenCorners3D = [
+  new THREE.Vector3(-0.88,  0.495, 0.074),
+  new THREE.Vector3( 0.88,  0.495, 0.074),
+  new THREE.Vector3(-0.88, -0.495, 0.074),
+  new THREE.Vector3( 0.88, -0.495, 0.074),
+];
+
+function project(v3, mesh){
+  const world = v3.clone().applyMatrix4(mesh.matrixWorld);
+  const ndc = world.clone().project(camera);
+  return {
+    x: ( ndc.x + 1) / 2 * canvas.clientWidth,
+    y: (-ndc.y + 1) / 2 * canvas.clientHeight,
+  };
+}
+
+function updateYTOverlay(){
+  if(!ytPlaying) return;
+  // Project all 4 corners
+  const [tl,tr,bl] = tvScreenCorners3D.map(c => project(c, screen));
+  const left   = Math.min(tl.x, bl.x);
+  const top    = Math.min(tl.y, tr.y);
+  const right  = Math.max(tr.x, project(tvScreenCorners3D[3], screen).x);
+  const bottom = Math.max(bl.y, project(tvScreenCorners3D[3], screen).y);
+  const w = right - left, h = bottom - top;
+  ytOverlay.style.left   = left   + 'px';
+  ytOverlay.style.top    = top    + 'px';
+  ytOverlay.style.width  = w      + 'px';
+  ytOverlay.style.height = h      + 'px';
+}
+
+function startYT(){
+    document.getElementById('vid-src').src = VIDEO_SRC;
+    vidPlayer.load();
+    vidPlayer.addEventListener('canplay', ()=>vidPlayer.play(), { once:true });
+    document.getElementById('yt-modal').classList.add('open');
+    ytPlaying = true;
+    screenM.emissiveIntensity = 0.05;
+    tvL.intensity = 0.2;
+    interactable.tv.label = '⏸ Pause';
+  }
+  
+  function pauseYT(){
+    vidPlayer.pause();
+    document.getElementById('yt-modal').classList.remove('open');
+    ytPlaying = false;
+    screenM.emissiveIntensity = 0.28;
+    tvL.intensity = 0.6;
+    interactable.tv.label = '▶ Putar Video';
+    drawTVIdle();
+    screenTex.needsUpdate = true;
+  }
+  
+  function toggleYT(){ ytPlaying ? pauseYT() : startYT(); }
+
+// ══════════════════════════════════════════════
+//  PHOTO FRAME — in-place texture swap
+// ══════════════════════════════════════════════
+let galIdx = 0;
+let frameTransitioning = false;
+const captionEl = document.getElementById('photo-caption');
+const dotsEl    = document.getElementById('photo-dots');
+
+// Build dot indicators
+function buildDots(){
+  dotsEl.innerHTML = '';
+  dotsEl.style.display = 'flex';
+  photos.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.style.cssText = `width:7px;height:7px;border-radius:50%;
+      background:${i===galIdx?'#C9A84C':'rgba(201,168,76,0.3)'};
+      border:1px solid rgba(201,168,76,0.6);transition:background .3s`;
+    dotsEl.appendChild(d);
+  });
+}
+
+function updateDots(){
+  [...dotsEl.children].forEach((d,i)=>{
+    d.style.background = i===galIdx ? '#C9A84C' : 'rgba(201,168,76,0.3)';
+  });
+}
+
+function updateFrameOverlays(){
+  // Project frame center to 2D for caption + dots
+  const frameCenter = new THREE.Vector3(0,0,0);
+  const worldPos = frameCenter.clone().applyMatrix4(frameGroup.matrixWorld);
+  const ndc = worldPos.clone().project(camera);
+  const sx = ( ndc.x+1)/2 * canvas.clientWidth;
+  const sy = (-ndc.y+1)/2 * canvas.clientHeight;
+
+  // Caption below frame
+  captionEl.style.left = sx + 'px';
+  captionEl.style.top  = (sy + 90) + 'px';
+
+  // Dots above frame
+  dotsEl.style.left = sx + 'px';
+  dotsEl.style.top  = (sy - 95) + 'px';
+}
+
+function drawPhotoOnFrame(idx){
+  const p = photos[idx];
+  pCtx.clearRect(0,0,520,380);
+  if(p.src){
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>{
+      pCtx.drawImage(img,0,0,520,380);
+      // Caption bar at bottom
+      pCtx.fillStyle='rgba(10,31,20,0.65)';
+      pCtx.fillRect(0,310,520,70);
+      pCtx.fillStyle='rgba(201,168,76,0.9)';
+      pCtx.font='italic 18px serif'; pCtx.textAlign='center';
+      pCtx.fillText(p.caption,260,352);
+      photoTex.needsUpdate = true;
+    };
+    img.src = p.src;
+  } else {
+    // Placeholder
+    const g = pCtx.createLinearGradient(0,0,0,380);
+    g.addColorStop(0,'#1E5535'); g.addColorStop(1,'#0D2B1F');
+    pCtx.fillStyle=g; pCtx.fillRect(0,0,520,380);
+    pCtx.strokeStyle='rgba(201,168,76,0.4)'; pCtx.lineWidth=2;
+    pCtx.strokeRect(12,12,496,356);
+    pCtx.fillStyle='rgba(201,168,76,0.55)';
+    pCtx.font='bold 22px serif'; pCtx.textAlign='center';
+    pCtx.fillText(p.caption || `Foto ${idx+1}`,260,170);
+    pCtx.font='italic 15px serif'; pCtx.fillStyle='rgba(201,168,76,0.35)';
+    pCtx.fillText('Klik untuk foto berikutnya →',260,210);
+    pCtx.fillStyle='rgba(201,168,76,0.25)';
+    pCtx.font='18px serif'; pCtx.fillText('✦  ✦  ✦',260,250);
+    photoTex.needsUpdate = true;
+  }
+}
+
+function nextPhoto(){
+  if(frameTransitioning) return;
+  frameTransitioning = true;
+  // Fade out
+  const mat = photoMesh.material;
+  mat.transparent = true;
+  let fade = 1;
+  const out = setInterval(()=>{
+    fade -= 0.12;
+    mat.opacity = Math.max(0, fade);
+    if(fade <= 0){
+      clearInterval(out);
+      galIdx = (galIdx+1) % photos.length;
+      drawPhotoOnFrame(galIdx);
+      updateDots();
+      captionEl.textContent = photos[galIdx].caption;
+      // Fade in
+      let fi = 0;
+      const inn = setInterval(()=>{
+        fi += 0.12;
+        mat.opacity = Math.min(1, fi);
+        if(fi >= 1){ clearInterval(inn); frameTransitioning=false; }
+      }, 16);
+    }
+  }, 16);
+}
+
+// Init frame
+drawPhotoOnFrame(0);
+buildDots();
+
+// Show caption + dots on frame hover
+let frameHovered = false;
+
+// ══════════════════════════════════════════════
+//  UPDATE INTERACTABLE ACTIONS
+// ══════════════════════════════════════════════
+interactable.tv.action    = toggleYT;
+interactable.tv.label     = '▶ Putar Video Lebaran';
+interactable.frame.action = nextPhoto;
+interactable.frame.label  = '🖼 Foto Berikutnya →';
+
+// ══════════════════════════════════════════════
+//  DOOR MODAL (keep as modal — it's a greeting)
+// ══════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openDoorModal(){ openModal('door-modal'); }
+
+// Snack toast
+let snackTimer;
+function showSnackToast(){
+  const el=document.getElementById('hint');
+  el.textContent='✦ Ketupat · Kurma · Nastar — Selamat menikmati!';
+  el.classList.add('visible');
+  clearTimeout(snackTimer);
+  snackTimer=setTimeout(()=>{
+    el.textContent='Klik TV untuk video · Klik bingkai untuk foto berikutnya';
+    el.classList.add('visible');
+  },3000);
+}
+
+// Name personalization
+function applyName(){
+  const n=document.getElementById('nameInput').value.trim();
+  if(!n)return;
+  document.getElementById('ban-title').textContent=`Selamat Hari Raya, ${n}! — 1446 H`;
+  document.getElementById('door-title').textContent=`Selamat Datang, ${n}!`;
+  drawTVIdle();
+  sCtx.fillStyle='rgba(201,168,76,0.55)';
+  sCtx.font='italic 12px serif'; sCtx.textAlign='center';
+  sCtx.fillText(`Untuk: ${n}`,256,248);
+  screenTex.needsUpdate=true;
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ pauseYT(); closeModal('door-modal'); }
+});
+document.getElementById('door-modal').addEventListener('click',function(e){
+  if(e.target===this) closeModal('door-modal');
+});
+
+// ══════════════════════════════════════════════
+//  ANIMATION LOOP
+// ══════════════════════════════════════════════
+const clock = new THREE.Clock();
+let loaded=false;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+
+  // Lantern gentle sway
+  lanternGroup.rotation.z = Math.sin(t*0.6)*0.02;
+
+  // Ketupat sway
+  scene.children.forEach(obj=>{
+    if(obj.userData.isKetupat){
+      obj.rotation.z = Math.sin(t*0.7+obj.userData.swayOffset)*0.08;
+      obj.rotation.x = Math.cos(t*0.5+obj.userData.swayOffset)*0.04;
+    }
+  });
+
+  // Candle light flicker
+  candleL.intensity = 0.55+Math.sin(t*7.3)*0.15+Math.sin(t*11.7)*0.08;
+  candleL.color.setHSL(0.08+Math.sin(t*3)*0.01, 1, 0.55);
+
+  // Lantern glow pulse
+  ceilL.intensity = 1.7+Math.sin(t*1.2)*0.12;
+
+  // TV screen gentle pulse
+  screenM.emissiveIntensity = 0.28+Math.sin(t*0.8)*0.06;
+
+  controls.update();
+  updateFrameOverlays();
+
+  renderer.render(scene,camera);
+
+  // Show UI after first render
+  if(!loaded){
+    loaded=true;
+    document.getElementById('loading').style.opacity='0';
+    setTimeout(()=>document.getElementById('loading').style.display='none',600);
+    document.getElementById('banner').classList.add('visible');
+    document.getElementById('name-bar').classList.add('visible');
+    setTimeout(()=>document.getElementById('hint').classList.add('visible'),2000);
+    setTimeout(()=>{
+      document.getElementById('hint').classList.remove('visible');
+      // Show caption and dots permanently
+      captionEl.style.display = 'block';
+      captionEl.textContent = photos[0].caption;
+      dotsEl.style.display = 'flex';
+    },5500);
+  }
+}
+
+document.getElementById('loading').style.transition='opacity .6s';
+animate();
+
+// ══════════════════════════════════════════
+//  OBJECT EDITOR (dev mode)
+// ══════════════════════════════════════════
+const editorObjects = {
+    'sofa':         sofaGroup,
+    'coffee table': ctGroup,
+    'tv body':      tvGroup,
+    'tv console':   console_,
+    'photo frame':  frameGroup,
+    'door':         doorGroup,
+    'carpet':       carpetMesh,
+    'lantern':      lanternGroup,
+  };
+  
+  let edTarget = null;
+  let edMode = false;
+  
+  const edSelect = document.getElementById('ed-select');
+  Object.keys(editorObjects).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    edSelect.appendChild(opt);
+  });
+  
+  edSelect.addEventListener('change', () => {
+    edTarget = editorObjects[edSelect.value];
+    edLoad();
+  });
+  
+  function edLoad() {
+    if (!edTarget) return;
+    document.getElementById('ed-px').value = edTarget.position.x;
+    document.getElementById('ed-py').value = edTarget.position.y;
+    document.getElementById('ed-pz').value = edTarget.position.z;
+    document.getElementById('ed-ry').value = edTarget.rotation.y;
+    document.getElementById('ed-sc').value = edTarget.scale.x;
+    edUpdateVals();
+  }
+  
+  function edApply() {
+    if (!edTarget) return;
+    edTarget.position.x = parseFloat(document.getElementById('ed-px').value);
+    edTarget.position.y = parseFloat(document.getElementById('ed-py').value);
+    edTarget.position.z = parseFloat(document.getElementById('ed-pz').value);
+    edTarget.rotation.y = parseFloat(document.getElementById('ed-ry').value);
+    const sc = parseFloat(document.getElementById('ed-sc').value);
+    edTarget.scale.set(sc, sc, sc);
+    edUpdateVals();
+  }
+  
+  function edUpdateVals() {
+    if (!edTarget) return;
+    const p = edTarget.position, r = edTarget.rotation, s = edTarget.scale;
+    document.getElementById('ed-vals').innerHTML =
+      `pos: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})<br>` +
+      `rot.y: ${r.y.toFixed(2)} &nbsp; scale: ${s.x.toFixed(2)}`;
+  }
+  
+  function edCopy() {
+    if (!edTarget) return;
+    const name = edSelect.value;
+    const p = edTarget.position, r = edTarget.rotation, s = edTarget.scale;
+    const code =
+      `// ${name}\n` +
+      `${editorObjects[name] === edTarget ? edSelect.value.replace(/ /g,'') : 'obj'}` +
+      `.position.set(${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)});\n` +
+      `${edSelect.value.replace(/ /g,'')}.rotation.y = ${r.y.toFixed(2)};\n` +
+      (s.x !== 1 ? `${edSelect.value.replace(/ /g,'')}.scale.set(${s.x.toFixed(2)}, ${s.x.toFixed(2)}, ${s.x.toFixed(2)});\n` : '');
+    navigator.clipboard.writeText(code).then(() => {
+      document.querySelector('#editor button').textContent = '✅ Copied!';
+      setTimeout(() => document.querySelector('#editor button').textContent = '📋 Copy Position Code', 1500);
+    });
+  }
+  
+  // Click-to-select in editor mode
+  canvas.addEventListener('click', e => {
+    if (!edMode) return;
+    const hits = getIntersect(e);
+    for (const h of hits) {
+      let obj = h.object;
+      // Walk up to find a named group in editorObjects
+      while (obj) {
+        if (Object.values(editorObjects).includes(obj)) {
+          edTarget = obj;
+          edSelect.value = Object.keys(editorObjects).find(k => editorObjects[k] === obj);
+          edLoad();
+          return;
+        }
+        obj = obj.parent;
+      }
+    }
+  }, true); // capture phase so it runs before the modal click handler
+  
+  // Toggle with E key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'e' || e.key === 'E') {
+      edMode = !edMode;
+      const panel = document.getElementById('editor');
+      panel.style.display = edMode ? 'flex' : 'none';
+      if (edMode && !edTarget) {
+        edTarget = editorObjects['sofa'];
+        edSelect.value = 'sofa';
+        edLoad();
+      }
+    }
+  });
+</script>
+</body>
+</html>
